@@ -7,7 +7,7 @@
   import ReservationEdit from "$lib/ReservationEdit.svelte";
   import { timeZone } from "$lib/settings";
   import NewReservation from "$lib/newReservation.svelte";
-  import type { Reservation } from "@prisma/client";
+  import type { Reservation } from "$src/app";
 
   export let data: PageData;
   let date = data.date ? new Date(data.date) : new Date();
@@ -142,7 +142,7 @@
               {/each}
               {#each reservations.filter((resv) => resv.roomId === room.id) as resv}
                 <button
-                  class="reservation"
+                  class="reservation text-truncate"
                   on:click={() => {
                     openResvervationDetails(resv);
                   }}

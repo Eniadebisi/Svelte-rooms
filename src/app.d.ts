@@ -1,5 +1,7 @@
 // See https://kit.svelte.dev/docs/types#app
 // for information about these interfaces
+import type { Reservation } from "@prisma/client";
+
 declare global {
   namespace App {
     // interface Error {}
@@ -17,13 +19,9 @@ declare global {
   }
 }
 
-interface reservationObject {
-  id: number;
-  roomId: number;
-  userId: number;
-  startTime: Date;
-  endTime: Date | null;
-  title: string;
-  details: string;
-  length: number | null;
+interface Reservation extends Reservation {
+  user: {
+    name: string;
+    role: string;
+  };
 }

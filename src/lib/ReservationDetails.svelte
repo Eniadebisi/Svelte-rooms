@@ -4,7 +4,7 @@
   import dayjs from "dayjs";
   import AdvancedFormat from "dayjs/plugin/advancedFormat";
   dayjs.extend(AdvancedFormat);
-  import type { Reservation } from "@prisma/client";
+  import type { Reservation } from "$src/app";
 
   export let isOpen, resvObj: Reservation, openEditResv, refresh: Function;
   let formError = "";
@@ -17,7 +17,7 @@
     });
     const { error } = await response.json();
 
-    if (error) { 
+    if (error) {
       formError = error;
     } else {
       refresh();
@@ -31,6 +31,8 @@
       <div class="mt-3 text-center" transition:scale={{ duration: 200 }}>
         <h3 class="">{resvObj.title}</h3>
         <div class="mt-2 px-7 py-3">
+          User : {resvObj.user.name}
+          <br />
           Details: {resvObj.details}
           <br />
           Date: {dayjs(resvObj.startTime).format("dddd, MMMM D, YYYY")}

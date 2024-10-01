@@ -10,6 +10,14 @@ dayjs.extend(timezone);
 export async function getReservations(start, end) {
   let reservations = await prisma.reservation.findMany({
     where: { startTime: { gte: start, lte: end } },
+    include: {
+      user: {
+        select: {
+          name: true,
+          role: true
+        }
+      }
+    },
   });
 
   // console.log("Got dates between " + dayjs(start).toISOString() + " and " + dayjs(end).toISOString());
@@ -110,7 +118,7 @@ export async function reserveRoom(roomId, userId, startTime, endTime, title, det
       // console.log(roomId, userId, startTime, endTime, title, details);
 
       return { error: false };
-    } else {      
+    } else {
       return { error: "Room is not available at that time." };
     }
   } catch (e) {
@@ -123,13 +131,13 @@ async function checkAvailability(roomId, start, end) {
     // console.log("Check availability " + dayjs(start).toISOString() + "-" + dayjs(end).toISOString());
 
     let reservations = await prisma.reservation.findFirst({
-      where: {roomId, startTime: { gte: start, lte: end } },
+      where: { roomId, startTime: { gte: start, lte: end } },
     });
-    
+
     if (reservations) {
       // console.log("Reservations not empty");
-      return false
-    };
+      return false;
+    }
     return true;
   } catch (e) {
     return { error: e.message };
@@ -154,7 +162,7 @@ export async function delReservation(id) {
       },
     });
 
-    return {error: false}
+    return { error: false };
   } catch (error) {
     logger.error(`Error deleting reservation: ${error}`);
     return { success: false, message: `Failed to delete reservation with ID ${reservationId}` };
