@@ -7,11 +7,10 @@
   import timezone from "dayjs/plugin/timezone";
   dayjs.extend(timezone);
 
-  import type { User } from "@prisma/client";
   import { timeZone } from "./settings";
   import { goto, invalidateAll } from "$app/navigation";
 
-  export let isOpen, rooms, user: User, refresh: Function;
+  export let isOpen, rooms, user: any, refresh: Function;
   let date = dayjs(new Date()).format("YYYY-MM-DD");
   let roomId: number,
     start: Date,
