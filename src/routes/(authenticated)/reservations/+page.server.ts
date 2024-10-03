@@ -6,18 +6,19 @@ dayjs.extend(timezone);
 
 export async function load({ parent, url }) {
   const { user } = await parent();
-  const date = url.searchParams.get("date");
-  console.log("Got date " + date);
+  const sDate = url.searchParams.get("date");
+  console.log("Got date " + sDate);
 
-  let start, end;
-  const dateFormat = /\d{2}\/\d{2}\/\d{4}/; // MM/DD/YYYY
-  if (date != null && dateFormat.test(date)) {
+  let start, end, date = new Date()
+  // const dateFormat = /\d{2}\/\d{2}\/\d{4}/; // MM/DD/YYYY
+  if (sDate != null) {
+    date = new Date(sDate)
     
-    start = dayjs(new Date(date)).tz(timeZone).startOf("day").utc();
-    end = dayjs(new Date(date)).tz(timeZone).endOf("day").utc();
+    start = dayjs(date).tz(timeZone).startOf("day").utc();
+    end = dayjs(date).tz(timeZone).endOf("day").utc();
   } else {
-    start = dayjs(new Date()).tz(timeZone).startOf("day").utc();
-    end = dayjs(new Date()).tz(timeZone).endOf("day").utc();
+    start = dayjs(date).tz(timeZone).startOf("day").utc();
+    end = dayjs(date).tz(timeZone).endOf("day").utc();
   }
   
   const { rooms, error: roomError } = await getRooms();

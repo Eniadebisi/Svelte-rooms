@@ -72,7 +72,7 @@
       <div class="m-2">
         <label for="roomId">Room</label>
         <select name="roomId" id="roomId" bind:value={roomId}>
-          <option selected>Select a room..</option>
+          <option disabled value="-1" selected>Select a room..</option>
           {#if rooms}
             {#each rooms as room}
               <option value={room.id}>{room.name} ({room.size})</option>

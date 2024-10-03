@@ -10,7 +10,7 @@
   import type { Reservation } from "$src/app";
 
   export let data: PageData;
-  let date = data.date ? new Date(data.date) : new Date();
+  let date = data.date ? data.date : new Date();
   let staticDate = dayjs(date).format("YYYY-MM-DD");
   let reservations = data.reservations;
 
@@ -35,7 +35,7 @@
       },
       refresh: () => {
         if (browser) {
-          window.location.href = "/reservations?date="+dayjs(date).format("MM/DD/YYYY");
+          window.location.href = "/reservations?date=" + date.toString()
         }
         closeModal();
       },
@@ -48,7 +48,7 @@
       user: data.user,
       refresh: () => {
         if (browser) {
-          window.location.href = "/";
+          window.location.href = "/reservations?date=" + date.toString()
         }
         closeModal();
       },
@@ -60,7 +60,7 @@
       user: data.user,
       refresh: () => {
         if (browser) {
-          window.location.href = "/";
+          window.location.href = "/reservations?date=" + date.toString()
         }
         closeModal();
       },

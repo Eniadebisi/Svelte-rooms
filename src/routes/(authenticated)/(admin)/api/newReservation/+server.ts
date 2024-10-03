@@ -6,7 +6,7 @@ import dayjs from "dayjs";
 export async function POST({ request }) {
   const { roomId, userId, startTime: start, endTime: end, eventTitle, eventDetails, recurrence } = await request.json();
 
-  if (!roomId || !userId || !start || !end || !eventTitle || !eventDetails) {
+  if (!roomId || parseInt(roomId)<0 || !userId || !start || !end || !eventTitle || !eventDetails) {
     return json({ error: "Missing one or more details" }, { status: 400 });
   }
 
