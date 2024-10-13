@@ -6,21 +6,25 @@
   dayjs.extend(AdvancedFormat);
   import type { Reservation } from "$src/app";
 
-  export let isOpen, resvObj: Reservation, openEditResv, refresh: Function;
+  export let isOpen, resvObj: Reservation, openEditResv, refresh: Function, user: any, notify: Function;
   let formError = "";
 
   async function deleteReservation() {
-    const reservationId = resvObj.id;
-    const response = await fetch("/api/deleteReservation", {
-      method: "POST",
-      body: JSON.stringify({ reservationId }),
-    });
-    const { error } = await response.json();
-
-    if (error) {
-      formError = error;
+    if (user.role < 2) {
+      notify("warn","Cannot edit this as member")
     } else {
-      refresh();
+      const reservationId = resvObj.id;
+      const response = await fetch("/api/deleteReservation", {
+        method: "POST",
+        body: JSON.stringify({ reservationId }),
+      });
+      const { error } = await response.json();
+  
+      if (error) {
+        formError = error;
+      } else {
+        refresh(resvObj.startTime.toISOString());
+      }
     }
   }
 </script>

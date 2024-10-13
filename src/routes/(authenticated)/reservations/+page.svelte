@@ -8,6 +8,7 @@
   import { timeZone } from "$lib/settings";
   import NewReservation from "$lib/newReservation.svelte";
   import type { Reservation } from "$src/app";
+  import { acts, Notifications } from "@tadashi/svelte-notification";
 
   export let data: PageData;
   let date = data.date ? data.date : new Date();
@@ -26,19 +27,23 @@
     const { reservations: resv, start, end } = await response.json();
     reservations = resv;
   }
-  function openResvervationDetails(resvObj: Reservation) {
+  function openResvervationDetails(resvObj: any) {
     openModal(ReservationDetails, {
       resvObj,
+      user: data.user,
       openEditResv: () => {
         closeModal();
         openReservationEdit(resvObj);
       },
-      refresh: () => {
+      refresh: (rDate: string) => {
         if (browser) {
-          window.location.href = "/reservations?date=" + date.toString()
+          window.location.href = "/reservations"
         }
         closeModal();
       },
+      notify: (mode: string, message: string) => {
+        acts.add({ mode, message});
+      }
     });
   }
   function openReservationEdit(resvObj: Reservation) {
@@ -46,9 +51,9 @@
       resvObj,
       rooms: data.rooms,
       user: data.user,
-      refresh: () => {
+      refresh: (rDate: string) => {
         if (browser) {
-          window.location.href = "/reservations?date=" + date.toString()
+          window.location.href = "/reservations"
         }
         closeModal();
       },
@@ -60,7 +65,7 @@
       user: data.user,
       refresh: () => {
         if (browser) {
-          window.location.href = "/reservations?date=" + date.toString()
+          window.location.href = "/reservations"
         }
         closeModal();
       },
@@ -158,6 +163,7 @@
     </div>
   </div>
 </div>
+<Notifications />
 
 <style>
   .rowStart {

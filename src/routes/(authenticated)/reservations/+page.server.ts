@@ -7,10 +7,8 @@ dayjs.extend(timezone);
 export async function load({ parent, url }) {
   const { user } = await parent();
   const sDate = url.searchParams.get("date");
-  console.log("Got date " + sDate);
 
   let start, end, date = new Date()
-  // const dateFormat = /\d{2}\/\d{2}\/\d{4}/; // MM/DD/YYYY
   if (sDate != null) {
     date = new Date(sDate)
     
