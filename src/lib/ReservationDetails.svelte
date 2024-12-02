@@ -46,7 +46,9 @@
         <div class="items-center px-4 py-3">
           <button on:click={closeModal} class=""> Close </button>
           <button on:click={openEditResv} class=""> Edit </button>
+          {#if user.role > 2}
           <button on:click={deleteReservation} class=""> Delete </button>
+          {/if}
         </div>
       </div>
     </div>
