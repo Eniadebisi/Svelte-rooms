@@ -10,18 +10,11 @@ declare global {
         name: string;
         id: number;
         email: string;
-        role: number;
+        roleTemp: number;
       };
     }
     // interface PageData {}
     // interface PageState {}
     // interface Platform {}
   }
-}
-
-interface Reservation extends Reservation {
-  user: {
-    name: string;
-    role: string;
-  };
 }
