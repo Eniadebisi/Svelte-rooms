@@ -4,14 +4,15 @@
   import dayjs from "dayjs";
   import AdvancedFormat from "dayjs/plugin/advancedFormat";
   dayjs.extend(AdvancedFormat);
-  import type { Reservation } from "$src/app";
+  import type { Reservation } from "@prisma/client";
+  import { hasPermission } from "./permissions/auth";
 
   export let isOpen, resvObj: Reservation, openEditResv, refresh: Function, user: any, notify: Function;
   let formError = "";
 
   async function deleteReservation() {
-    if (user.role < 2) {
-      notify("warn","Cannot edit this as member")
+    if (!hasPermission(user, "Reservation", "delete", resvObj)) {
+      notify("warn", "Cannot edit this as member");
     } else {
       const reservationId = resvObj.id;
       const response = await fetch("/api/deleteReservation", {
@@ -19,7 +20,7 @@
         body: JSON.stringify({ reservationId }),
       });
       const { error } = await response.json();
-  
+
       if (error) {
         formError = error;
       } else {
@@ -35,7 +36,7 @@
       <div class="mt-3 text-center" transition:scale={{ duration: 200 }}>
         <h3 class="">{resvObj.title}</h3>
         <div class="mt-2 px-7 py-3">
-          User : {resvObj.user.name}
+          User : {resvObj.userId}
           <br />
           Details: {resvObj.details}
           <br />
@@ -46,8 +47,8 @@
         <div class="items-center px-4 py-3">
           <button on:click={closeModal} class=""> Close </button>
           <button on:click={openEditResv} class=""> Edit </button>
-          {#if user.role > 2}
-          <button on:click={deleteReservation} class=""> Delete </button>
+          {#if user.roleTemp > 2}
+            <button on:click={deleteReservation} class=""> Delete </button>
           {/if}
         </div>
       </div>

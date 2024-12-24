@@ -14,7 +14,7 @@ export async function getReservations(start, end) {
       user: {
         select: {
           name: true,
-          role: true
+          roleTemp: true
         }
       }
     },
@@ -164,7 +164,6 @@ export async function delReservation(id) {
 
     return { error: false };
   } catch (error) {
-    logger.error(`Error deleting reservation: ${error}`);
-    return { success: false, message: `Failed to delete reservation with ID ${reservationId}` };
+    return { success: false, message: `Failed to delete resv${reservationId}` + error };
   }
 }

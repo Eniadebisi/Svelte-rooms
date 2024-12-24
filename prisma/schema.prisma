@@ -12,8 +12,17 @@ model User {
   email       String        @unique
   password    String
   name        String
-  role        Int
+  roleTemp        Int @default(0)
+  Roles        Roles @default(Restricted_User)
   Reservation Reservation[]
+}
+
+enum Roles {
+  Owner
+  Admin
+  User
+  Guest
+  Restricted_User
 }
 
 model Room {

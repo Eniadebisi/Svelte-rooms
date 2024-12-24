@@ -44,7 +44,6 @@ export const actions: Actions = {
     throw redirect(302, "/reservations");
   },
   signOut: async (event) => {
-	console.log("Ran");
 	
     event.cookies.delete("AuthorizationToken", { path: "/" });
 

@@ -1,8 +1,10 @@
 <script lang="ts">
+  import { hasPermission } from "$lib/permissions/auth";
   import { Logo } from "$lib/settings";
   import type { LayoutData } from "./$types";
 
   export let data: LayoutData;
+  let user = data.user
 </script>
 
 <div class="navbar bg-body-tertiary p-3">
@@ -11,17 +13,17 @@
     </a>
     <div class="navbar-nav d-flex flex-row flex-grow-1 px-1 justify-content-around">
       <a class="nav-link" href="/reservations">Reservations</a>
-      {#if data.user.role > 1}
-        
+      
+      <!-- {#if hasPermission(user, "UserManagement", "update")} -->
       <a class="nav-link" href="/spaces">Manage Spaces</a>
       <a class="nav-link" href="/users">Manage Users</a>
       <a class="nav-link" href="/register">Register User</a>
-      {/if}
+      <!-- {/if} -->
       <a class="nav-link" href="/profile">Profile</a>
     </div>
     <div class="h-100">
       {data.user.name}
-      ({data.user.role})
+      ({data.user.roleTemp})
       <form action="../signout?" method="POST">
         <button><i class="bi bi-box-arrow-right"></i></button>
       </form>

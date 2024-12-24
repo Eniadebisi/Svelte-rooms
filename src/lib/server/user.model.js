@@ -12,19 +12,29 @@ export async function signUp(email, name, password, role) {
 
     if (emailCheck) return { error: "User already exists with that email" };
 
-    const user = await prisma.user.create({
-      data: {
-        email,
-        name,
-        password: await bcrypt.hash(password, 10),
-        role,
-      },
-    });
+    if (role) {
+      const user = await prisma.user.create({
+        data: {
+          email,
+          name,
+          password: await bcrypt.hash(password, 10),
+          roleTemp,
+        },
+      });
+    } else {
+      const user = await prisma.user.create({
+        data: {
+          email,
+          name,
+          password: await bcrypt.hash(password, 10),
+        },
+      });
+    }
     return { user };
   } catch (e) {
     return { error: e.message };
   }
-};
+}
 
 export async function checkSignIn(email, password) {
   // Check if user exists
@@ -41,37 +51,32 @@ export async function checkSignIn(email, password) {
 
   if (!passwordIsValid) return { error: "Incorrect password" };
 
-  // Check if user role is exist
-  if (!(user.role > 0)) return { error: "User restricted" };
+  // Check if user roleTemp is exist
+  if (user.Roles == "Restricted_User") return { error: "User restricted" };
 
   const jwtUser = {
     id: user.id,
     email: user.email,
-    role: user.role,
+    roleTemp: user.roleTemp,
   };
 
   // Generate token
-  return {token: jwt.sign(jwtUser, JWT_ACCESS_SECRET, { expiresIn: "1d" })}
+  return { token: jwt.sign(jwtUser, JWT_ACCESS_SECRET, { expiresIn: "1d" }) };
 }
 
 export async function getUsers() {
-  const users = await prisma.user.findMany()
-  return users
+  const users = await prisma.user.findMany();
+  return users;
 }
 
-export async function setUserRole(id, role) {
-  
+export async function setUserRole(id, roleTemp) {
   const user = await prisma.user.update({
     where: {
       id,
     },
     data: {
-      role: role
-    }
-  }).catch((e) => {
-    logger.error(e.message);
+      roleTemp: roleTemp,
+    },
   });
-
-  logger.info(`Edited ${id} to ${role}`);
   return "Success";
 }

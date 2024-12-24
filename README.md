@@ -54,6 +54,7 @@ npm install
 
 - SvelteKit: Framework for building Svelte applications.
 - Vite: Build tool for a fast and optimized development experience.
+- [Vitest](https://vitest.dev/guide/)
 - Prisma: ORM for database interactions.
 - Bootstrap: CSS framework for styling.
 - Day.js: Library for date and time manipulation.
