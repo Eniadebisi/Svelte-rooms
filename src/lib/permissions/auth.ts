@@ -4,7 +4,7 @@ type User = {
   id: number;
   email: string;
   name: string;
-  Roles: Roles;
+  role: Roles;
 }
 
 type PermissionCheck<Key extends keyof UserPermissions> = boolean | ((user: User, data: UserPermissions[Key]["dataType"]) => boolean);
@@ -132,7 +132,7 @@ export const ROLES = {
 };
 
 export function hasPermission<Resource extends keyof UserPermissions>(user: User, resource: Resource, action: UserPermissions[Resource]["action"], data?: UserPermissions[Resource]["dataType"]) {
-  const permission = (ROLES as RolesWithPermissions)[user.Roles][resource]?.[action];
+  const permission = (ROLES as RolesWithPermissions)[user.role][resource]?.[action];
 
   if (permission == null) return false;
   if (typeof permission === "boolean") return permission;
