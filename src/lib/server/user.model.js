@@ -52,7 +52,7 @@ export async function checkSignIn(email, password) {
   if (!passwordIsValid) return { error: "Incorrect password" };
 
   // Check if user roleTemp is exist
-  if (user.Roles == "Restricted_User") return { error: "User restricted" };
+  if (user.role == "Restricted_User") return { error: "User restricted" };
 
   const jwtUser = {
     id: user.id,
@@ -79,4 +79,37 @@ export async function setUserRole(id, roleTemp) {
     },
   });
   return "Success";
+}
+
+export async function updatePassword(id, password) {
+  // Check if user exists by email
+  try {
+    const user = await prisma.user.update({
+      where: { id },
+      data: {
+        password: await bcrypt.hash(password, 10),
+        generatedPW: false,
+      },
+    });
+    return { error: false };
+  } catch (e) {
+    return { error: e.message };
+  }
+}
+
+export async function resetPW(id, password, deadline) {
+  // Check if user exists by email
+  try {
+    const user = await prisma.user.update({
+      where: { id },
+      data: {
+        generatedPW: true,
+        resetPWExpires: deadline,
+        password: await bcrypt.hash(password, 10),
+      },
+    });
+    return { error: false };
+  } catch (e) {
+    return { error: e.message };
+  }
 }

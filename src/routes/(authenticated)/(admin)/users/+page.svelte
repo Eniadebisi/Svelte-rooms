@@ -3,11 +3,12 @@
   import { Notifications, acts } from "@tadashi/svelte-notification";
   import { PUBLIC_SITE_NAME } from "$env/static/public";
 
-  async function handleRoleChange(event: Event, oldRole: number, userId: Number, userName: String) {
+  async function handleRoleChange(event: Event, oldRole: string, userId: Number, userName: String) {
     const { target } = event;
     if (!target) return;
     const selFunction = "editRole";
     let newrole = (target as HTMLSelectElement).value;
+    return;
 
     const response = await fetch("/api/editUserRole", {
       method: "POST",
@@ -25,9 +26,10 @@
     }
   }
   async function handleEmailReset(event: Event, userId: Number, email: String, userName: String) {
-    if (data.user.role >= 2) {
+    if (data.user.roleTemp >= 2) {
       try {
         const selFunction = "resetPW";
+        return;
         const response = await fetch("/api/editUserRole", {
           method: "POST",
           body: JSON.stringify({ userId, selFunction, email, userName }),
@@ -55,7 +57,7 @@
 
   <table>
     <thead>
-      <th> User ID </th>
+      <th> ID </th>
       <th> User Name </th>
       <th> User Email </th>
       <th> User Role </th>
@@ -68,16 +70,14 @@
         <td> {user.name} </td>
         <td> {user.email} </td>
 
-        {#if data.user.role > 1}
           <td>
             <select name="role" id="role" on:change={(e) => handleRoleChange(e, user.role, user.id, user.name)} value={user.role}>
-              <option value={0}>Guest</option>
-              <option value={1}>User</option>
-              <option value={2}>Admin</option>
-              <option value={3}>Owner</option>
+              <option value="Owner">Owner</option>
+              <option value="Admin">Admin</option>
+              <option value="User">User</option>
+              <option value="Guest">Guest</option>
             </select>
           </td>
-        {/if}
         <td> <button on:click={(e) => handleEmailReset(e, user.id, user.email, user.name)}>Reset</button> </td>
       </tr>
     {/each}

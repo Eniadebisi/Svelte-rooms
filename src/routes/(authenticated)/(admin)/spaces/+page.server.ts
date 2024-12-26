@@ -2,8 +2,14 @@ import { editLocation, editRoom, getLocations, getRooms, newLocation, newRoom } 
 import { fail } from "@sveltejs/kit";
 import type { PageServerLoad } from "./$types";
 import type { Actions } from "./$types";
+import { error, redirect } from "@sveltejs/kit";
+import { hasPermission } from "$lib/permissions/auth";
 
-export const load = (async () => {
+export const load = (async ({locals}) => {
+  const user = locals.user;
+
+  if (!user) throw error(400, { message: "Restricted" });
+
   const { rooms } = await getRooms();
   if (!rooms) throw new Error();
 

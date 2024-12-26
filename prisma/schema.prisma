@@ -13,7 +13,7 @@ model User {
   password    String
   name        String
   roleTemp        Int @default(0)
-  Roles        Roles @default(Restricted_User)
+  role        Roles @default(Restricted_User)
   Reservation Reservation[]
 }
 

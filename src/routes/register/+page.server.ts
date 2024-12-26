@@ -3,7 +3,7 @@ import type { Actions } from "./$types";
 import { fail, redirect } from "@sveltejs/kit";
 
 export async function load({locals}) {
-  if (locals.user && locals.user.role < 2) redirect(302, "/reservations");
+  if (locals.user && locals.user.roleTemp < 2) redirect(302, "/reservations");
 
   return {user: locals.user};
 }
@@ -15,7 +15,7 @@ export const actions: Actions = {
     const email = data.email;
     const password = data.password;
     const name = data.name;
-    const role = data.role ? parseInt(data.role.toString()) : 0;
+    const roleTemp = data.roleTemp ? parseInt(data.roleTemp.toString()) : 0;
 
     if (!email || !password) {
       return fail(400, {
@@ -23,7 +23,7 @@ export const actions: Actions = {
       });
     }
 
-    const { error } = await signUp(email, name, password, role);
+    const { error } = await signUp(email, name, password, roleTemp);
 
     if (error) {
       return fail(401, {
