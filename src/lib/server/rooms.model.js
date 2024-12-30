@@ -126,19 +126,19 @@ export async function reserveRoom(roomId, userId, startTime, endTime, title, det
   }
 }
 
-async function checkAvailability(roomId, start, end) {
+export async function checkAvailability(roomId, start, end) {
   try {
     // console.log("Check availability " + dayjs(start).toISOString() + "-" + dayjs(end).toISOString());
 
-    let reservations = await prisma.reservation.findFirst({
-      where: { roomId, startTime: { gte: start, lte: end } },
+    const overlapping = await prisma.reservation.findFirst({
+      where: { roomId, OR: [{ startTime: { lt: end }, endTime: { gt: start }}] },
     });
 
-    if (reservations) {
-      // console.log("Reservations not empty");
-      return false;
+    if (overlapping) {
+      return { error: "Time not available to reservations at that time." };
     }
-    return true;
+
+    return { error: false };
   } catch (e) {
     return { error: e.message };
   }

@@ -52,7 +52,7 @@ export async function checkSignIn(email, password) {
   if (!passwordIsValid) return { error: "Incorrect password" };
 
   // Check if user roleTemp is exist
-  if (user.role == "Restricted_User") return { error: "User restricted" };
+  if (user.role == "Restricted") return { error: "User restricted" };
 
   const jwtUser = {
     id: user.id,

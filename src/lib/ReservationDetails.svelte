@@ -10,10 +10,9 @@
   export let isOpen, resvObj: Reservation, openEditResv, refresh: Function, user: any, notify: Function;
   let formError = "";
 
+
   async function deleteReservation() {
-    if (!hasPermission(user, "Reservation", "delete", resvObj)) {
-      notify("warn", "Cannot edit this as member");
-    } else {
+    if (hasPermission(user, "Reservation", "delete", resvObj)) {
       const reservationId = resvObj.id;
       const response = await fetch("/api/deleteReservation", {
         method: "POST",
@@ -26,6 +25,8 @@
       } else {
         refresh(resvObj.startTime.toISOString());
       }
+    } else {
+      notify("warn", "Cannot delete another user's reservation");
     }
   }
 </script>
