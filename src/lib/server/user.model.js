@@ -3,7 +3,7 @@ import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import { prisma } from "./db";
 
-export async function signUp(email, name, password, role) {
+export async function signUp(email, name, password) {
   // Check if user exists by email
   try {
     const emailCheck = await prisma.user.findUnique({
@@ -12,24 +12,14 @@ export async function signUp(email, name, password, role) {
 
     if (emailCheck) return { error: "User already exists with that email" };
 
-    if (role) {
-      const user = await prisma.user.create({
-        data: {
-          email,
-          name,
-          password: await bcrypt.hash(password, 10),
-          roleTemp,
-        },
-      });
-    } else {
-      const user = await prisma.user.create({
-        data: {
-          email,
-          name,
-          password: await bcrypt.hash(password, 10),
-        },
-      });
-    }
+    const user = await prisma.user.create({
+      data: {
+        email,
+        name,
+        password: await bcrypt.hash(password, 10),
+      },
+    });
+
     return { user };
   } catch (e) {
     return { error: e.message };
@@ -51,13 +41,13 @@ export async function checkSignIn(email, password) {
 
   if (!passwordIsValid) return { error: "Incorrect password" };
 
-  // Check if user roleTemp is exist
+  // Check if user role is exist
   if (user.role == "Restricted") return { error: "User restricted" };
 
   const jwtUser = {
     id: user.id,
     email: user.email,
-    roleTemp: user.roleTemp,
+    role: user.role,
   };
 
   // Generate token
@@ -69,13 +59,13 @@ export async function getUsers() {
   return users;
 }
 
-export async function setUserRole(id, roleTemp) {
+export async function setUserRole(id, role) {
   const user = await prisma.user.update({
     where: {
       id,
     },
     data: {
-      roleTemp: roleTemp,
+      role,
     },
   });
   return "Success";

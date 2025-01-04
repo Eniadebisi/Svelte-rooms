@@ -7,8 +7,8 @@
   import ReservationEdit from "$lib/ReservationEdit.svelte";
   import { timeZone } from "$lib/settings";
   import NewReservation from "$lib/newReservation.svelte";
-  import type { Reservation } from "$src/app";
   import { acts, Notifications } from "@tadashi/svelte-notification";
+  import type { Reservation } from "@prisma/client";
 
   export let data: PageData;
   let date = data.date ? data.date : new Date();
@@ -27,7 +27,7 @@
     const { reservations: resv, start, end } = await response.json();
     reservations = resv;
   }
-  function openResvervationDetails(resvObj: any) {
+  function openResvervationDetails(resvObj: Reservation) {
     openModal(ReservationDetails, {
       resvObj,
       user: data.user,
@@ -37,23 +37,22 @@
       },
       refresh: (rDate: string) => {
         if (browser) {
-          window.location.href = "/reservations"
+          window.location.href = "/reservations";
         }
         closeModal();
       },
       notify: (mode: string, message: string) => {
-        acts.add({ mode, message});
-      }
+        acts.add({ mode, message });
+      },
     });
   }
   function openReservationEdit(resvObj: Reservation) {
     openModal(ReservationEdit, {
       resvObj,
       rooms: data.rooms,
-      user: data.user,
       refresh: (rDate: string) => {
         if (browser) {
-          window.location.href = "/reservations"
+          window.location.href = "/reservations";
         }
         closeModal();
       },
@@ -65,12 +64,13 @@
       user: data.user,
       refresh: () => {
         if (browser) {
-          window.location.href = "/reservations"
+          window.location.href = "/reservations";
         }
         closeModal();
       },
     });
   }
+
 </script>
 
 <div class="px-4 py-1 mt-1 text-center d-flex flex-column align-items-center">

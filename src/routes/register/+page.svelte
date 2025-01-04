@@ -1,14 +1,13 @@
 <script lang="ts">
   import { enhance } from "$app/forms";
   import { goto } from "$app/navigation";
-  export let data;
+  
   let showPW = false;
   let error = "";
   function togglePW() {
     showPW = !showPW;
   }
   export let form
-  let showRole = data.user ? (data.user.roleTemp > 2 ? true : false) : true;
 </script>
 
 <div class="fullHeight d-flex align-items-center flex-column justify-content-center row-gap">
@@ -58,15 +57,6 @@
     <div class="input-group mb-3 align-middle">
       <span class="input-group-text" id="basic-addon1">**</span>
       <input class="form-control" type="password" name="verifyPassword" placeholder="Verify Password" required />
-    </div>
-
-    <div class="input-group mb-3 align-middle" hidden={showRole}>
-      <select class="form-control" name="roleTemp" id="roleTemp" required>
-        <option selected disabled value="0">Select a roleTemp...</option>
-        <option value="2">Admin</option>
-        <option value="1">User</option>
-        <option value="0">Guest</option>
-      </select>
     </div>
 
     {#if error}

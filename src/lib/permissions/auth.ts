@@ -1,11 +1,11 @@
-import type {Roles, Reservation, Room, Location } from "@prisma/client";
+import type { Roles, Reservation, Room, Location } from "@prisma/client";
 
-type User = {
+export type User = {
   id: number;
   email: string;
   name: string;
   role: Roles;
-}
+};
 
 type PermissionCheck<Key extends keyof UserPermissions> = boolean | ((user: User, data: UserPermissions[Key]["dataType"]) => boolean);
 
@@ -20,7 +20,7 @@ type RolesWithPermissions = {
 type UserPermissions = {
   UserManagement: {
     dataType: User;
-    action: "update" | "delete";
+    action: "update" | "delete" | "create";
   };
   Reservation: {
     dataType: Reservation;
@@ -39,6 +39,7 @@ type UserPermissions = {
 export const ROLES = {
   Owner: {
     UserManagement: {
+      create: true,
       update: true,
       delete: true,
     },
@@ -63,6 +64,7 @@ export const ROLES = {
   },
   Admin: {
     UserManagement: {
+      create: true,
       update: true,
       delete: false,
     },
@@ -87,14 +89,15 @@ export const ROLES = {
   },
   User: {
     UserManagement: {
-      update: (user: User, otherUserObject: User) => (user.id == otherUserObject.id),
+      create: false,
+      update: (user: User, otherUserObject: User) => user.id == otherUserObject.id,
       delete: false,
     },
     Reservation: {
       create: true,
       view: true,
-      update: (user: User, reservation: Reservation) => (user.id == reservation.userId),
-      delete: (user: User, reservation: Reservation) => (user.id == reservation.userId),
+      update: (user: User, reservation: Reservation) => user.id == reservation.userId,
+      delete: (user: User, reservation: Reservation) => user.id == reservation.userId,
     },
     Room: {
       create: false,
@@ -110,6 +113,11 @@ export const ROLES = {
     },
   },
   Guest: {
+    UserManagement: {
+      create: false,
+      update: false,
+      delete: false,
+    },
     Reservation: {
       create: false,
       view: true,
@@ -143,6 +151,3 @@ export function hasPermission<Resource extends keyof UserPermissions>(user: User
 
   return false;
 }
-
-
-

@@ -4,7 +4,7 @@ import { json } from "@sveltejs/kit";
 import dayjs from "dayjs";
 
 export async function POST({ request }) {
-  const { roomId, userId, startTime: start, endTime: end, eventTitle, eventDetails, recurrence } = await request.json();
+  const { roomId, userId, startTime: start, endTime: end, eventTitle, eventDetails, RecurrencePattern } = await request.json();
 
   if (!roomId || parseInt(roomId) < 0 || !userId || !start || !end || !eventTitle || !eventDetails) {
     return json({ error: "Missing one or more details" }, { status: 400 });
@@ -21,7 +21,8 @@ export async function POST({ request }) {
   }
   // return json({ error: "Passed" }, { status: 400 });
 
-  const { error } = await reserveRoom(roomId, userId, start, end, eventTitle, eventDetails);
+
+  const { error } = await reserveRoom(roomId, userId, start, end, eventTitle, eventDetails, RecurrencePattern);
   if (error) {
     return json({ error }, { status: 400 });
   }

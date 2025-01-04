@@ -1,6 +1,6 @@
 // See https://kit.svelte.dev/docs/types#app
 // for information about these interfaces
-import type { Reservation } from "@prisma/client";
+import type { Roles } from "@prisma/client";
 
 declare global {
   namespace App {
@@ -10,7 +10,7 @@ declare global {
         name: string;
         id: number;
         email: string;
-        roleTemp: number;
+        role: Roles;
       };
     }
     // interface PageData {}

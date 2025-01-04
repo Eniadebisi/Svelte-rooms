@@ -6,10 +6,10 @@
   dayjs.extend(utc);
   import timezone from "dayjs/plugin/timezone";
   dayjs.extend(timezone);
-  import type { Reservation } from "$src/app";
   import { timeZone } from "./settings";
+  import type { Reservation } from "@prisma/client";
 
-  export let isOpen, rooms, user: any, refresh: Function;
+  export let isOpen, rooms, refresh: Function;
   export let resvObj: Reservation;
   let date = dayjs(resvObj.startTime).format("YYYY-MM-DD");
   const reservationId = resvObj.id;

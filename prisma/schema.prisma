@@ -12,8 +12,8 @@ model User {
   email       String        @unique
   password    String
   name        String
-  roleTemp        Int @default(0)
-  role        Roles @default(Restricted_User)
+  roleTemp    Int           @default(0)
+  role        Roles         @default(Restricted)
   Reservation Reservation[]
 }
 
@@ -22,7 +22,7 @@ enum Roles {
   Admin
   User
   Guest
-  Restricted_User
+  Restricted
 }
 
 model Room {
@@ -30,9 +30,9 @@ model Room {
   name         String
   size         Int
   locationId   Int
+  details      String
   reservations Reservation[]
   location     Location      @relation(fields: [locationId], references: [id])
-  details      String
 
   @@index([locationId], map: "Room_locationId_fkey")
 }
@@ -42,11 +42,11 @@ model Reservation {
   roomId     Int
   userId     Int
   startTime  DateTime
-  endTime    DateTime?
-  title      String      @db.VarChar(50)
   details    String      @db.VarChar(200)
   length     Int?
-  Recurrence Recurrence?
+  title      String      @db.VarChar(50)
+  endTime    DateTime
+  RecurrencePattern String?
   Room       Room        @relation(fields: [roomId], references: [id])
   user       User        @relation(fields: [userId], references: [id])
 
@@ -58,14 +58,4 @@ model Location {
   id    Int    @id @default(autoincrement())
   name  String @unique @db.VarChar(50)
   rooms Room[]
-}
-
-model Recurrence {
-  id            Int         @id @default(autoincrement())
-  reservationId Int         @unique
-  reservation   Reservation @relation(fields: [reservationId], references: [id])
-  frequency     String
-  interval      Int
-  dayOfWeek     String
-  endDate       DateTime
 }

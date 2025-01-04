@@ -5,11 +5,10 @@
   import AdvancedFormat from "dayjs/plugin/advancedFormat";
   dayjs.extend(AdvancedFormat);
   import type { Reservation } from "@prisma/client";
-  import { hasPermission } from "./permissions/auth";
+  import { hasPermission, type User } from "./permissions/auth";
 
-  export let isOpen, resvObj: Reservation, openEditResv, refresh: Function, user: any, notify: Function;
+  export let isOpen, resvObj: Reservation, openEditResv, refresh: Function, user: User, notify: Function;
   let formError = "";
-
 
   async function deleteReservation() {
     if (hasPermission(user, "Reservation", "delete", resvObj)) {
@@ -48,7 +47,7 @@
         <div class="items-center px-4 py-3">
           <button on:click={closeModal} class=""> Close </button>
           <button on:click={openEditResv} class=""> Edit </button>
-          {#if user.roleTemp > 2}
+          {#if hasPermission(user, "Reservation", "delete", resvObj)}
             <button on:click={deleteReservation} class=""> Delete </button>
           {/if}
         </div>

@@ -36,6 +36,7 @@
     "bootstrap-icons": "^1.11.3",
     "dayjs": "^1.11.13",
     "jsonwebtoken": "^9.0.2",
-    "nodemailer": "^6.9.16"
+    "nodemailer": "^6.9.16",
+    "rrule": "^2.8.1"
   }
 }

@@ -14,15 +14,16 @@ export async function getReservations(start, end) {
       user: {
         select: {
           name: true,
-          roleTemp: true
-        }
-      }
+          role: true,
+        },
+      },
     },
   });
 
   // console.log("Got dates between " + dayjs(start).toISOString() + " and " + dayjs(end).toISOString());
   return { reservations, error: false };
 }
+
 export async function getRooms() {
   try {
     let rooms = await prisma.room.findMany({});
@@ -102,7 +103,7 @@ export async function editLocation(locationId, name) {
   }
 }
 
-export async function reserveRoom(roomId, userId, startTime, endTime, title, details) {
+export async function reserveRoom(roomId, userId, startTime, endTime, title, details, RecurrencePattern) {
   try {
     if (await checkAvailability(roomId, startTime, endTime)) {
       await prisma.reservation.create({
@@ -113,6 +114,7 @@ export async function reserveRoom(roomId, userId, startTime, endTime, title, det
           endTime,
           title,
           details,
+          RecurrencePattern,
         },
       });
       // console.log(roomId, userId, startTime, endTime, title, details);
@@ -131,7 +133,7 @@ export async function checkAvailability(roomId, start, end) {
     // console.log("Check availability " + dayjs(start).toISOString() + "-" + dayjs(end).toISOString());
 
     const overlapping = await prisma.reservation.findFirst({
-      where: { roomId, OR: [{ startTime: { lt: end }, endTime: { gt: start }}] },
+      where: { roomId, OR: [{ startTime: { lt: end }, endTime: { gt: start } }] },
     });
 
     if (overlapping) {

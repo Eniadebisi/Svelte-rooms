@@ -28,7 +28,7 @@ export const handle = async ({ event, resolve }) => {
           const sessionUser = {
             id: user.id,
             email: user.email,
-            roleTemp: user.roleTemp,
+            role: user.role,
             name: user.name,
           };
 
@@ -40,9 +40,8 @@ export const handle = async ({ event, resolve }) => {
       }
     } else {
       const sessionUser = {
-        id: 0,
+        id: 1,
         email: "dev@gmail.com",
-        roleTemp: 3,
         role: "Owner",
         name: "Development",
       };
