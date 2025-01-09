@@ -13,6 +13,10 @@ export async function POST({ request }) {
   if (end < start) {
     return json({ error: "End time must be after start time." }, { status: 400 });
   }
+  
+  if (RecurrencePattern && !RecurrencePattern.includes("UNTIL")) {
+    return json({ error: "If you include recurrence, please include end date." }, { status: 400 });
+  }
 
   const { error: availabilityError } = await checkAvailability(roomId, start, end);
 
