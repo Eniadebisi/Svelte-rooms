@@ -1,0 +1,95 @@
+<script lang="ts">
+  export let data;
+  import { Notifications, acts } from "@tadashi/svelte-notification";
+  import { enhance } from "$app/forms";
+
+  console.assert(!!data.user);
+  let showUpdatePWFields = false;
+  let CnfnewPW = ""
+  export let form
+  let newPW = ""
+
+  function togglePWModal() {
+    showUpdatePWFields = !showUpdatePWFields;
+  }
+
+  let error = "";
+</script>
+
+<div class="px-4 py-1 mt-1 text-center d-flex flex-column align-items-center" style="margin-bottom: 50px;">
+  <h1 class="mb-3">Profile</h1>
+  <p><strong>User Name</strong> {data.user.name} ({data.user.role})</p>
+  <p><strong>Email</strong> {data.user.email}</p>
+  <p><strong>Password</strong> <button on:click={togglePWModal}>Update</button></p>
+  {#if showUpdatePWFields}
+
+    <form class="modal" action="?/updatePW" use:enhance={({ formElement, formData, action, cancel, submitter }) => {      
+      error = "";
+      let currPW = formData.get("currPW");
+      let newPW = formData.get("newPW");
+      let CnfnewPW = formData.get("CnfnewPW");
+      if (newPW !== CnfnewPW) {
+        cancel();
+        error = "New Passwords don't match";
+        return;
+      }
+
+		return async ({ result, update }) => {
+        if (!error) {
+          update();
+        }
+		};
+	}} method="POST">
+      <div class="mb-3 align-middle d-flex flex-column">
+        <label for="currPW">Old password</label>
+        <input type="text" id="currPW" name="currPW" />
+      </div>
+      <div class="mb-3 align-middle d-flex flex-column">
+        <label for="newPW">New Password</label>
+        <input type="text" id="newPW" name="newPW" bind:value={newPW} />
+      </div>
+      <div class="mb-3 align-middle d-flex flex-column">
+        <label for="CnfnewPW">Confirm New Password</label>
+        <input type="text" id="CnfnewPW" name="CnfnewPW" bind:value={CnfnewPW} />
+      </div>
+
+      <!-- {#if error || form?.error}
+      <div class="error m-2">
+        {error ? error : form?.error}
+      </div>
+        
+      {/if} -->
+      <i>You will be signed out after password is updated.</i>
+      <button>Submit</button>
+    </form>
+  {/if}
+</div>
+
+
+
+<Notifications />
+
+<style>
+  .modal {
+    width: 250px;
+    height: 350px;
+    border-radius: 25px;
+    margin: auto;
+    background-color: #e9e9e9;
+    z-index: 999;
+    top: 0;
+    bottom: 0;
+    right: 0;
+    left: 0;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+  }
+  
+  .error {
+    border-color: red;
+    font-style: italic;
+    color: orangered;
+  }
+</style>
