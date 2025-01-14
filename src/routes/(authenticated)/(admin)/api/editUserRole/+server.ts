@@ -3,7 +3,7 @@ import { json } from "@sveltejs/kit";
 import nodemailer from "nodemailer";
 import { EMAIL_PASSWORD } from "$env/static/private";
 import dayjs from "dayjs";
-import { CONTACT_EMAIL, SITE_NAME } from "$lib/settings.js";
+import { CONTACT_EMAIL, SITE_NAME } from "../../../../../../settings.js";
 
 const transporter = nodemailer.createTransport({
   host: "smtp.titan.email",

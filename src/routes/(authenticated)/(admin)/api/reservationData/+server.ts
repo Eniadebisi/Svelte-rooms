@@ -1,5 +1,5 @@
 import { getReservations } from "$lib/server/rooms.model";
-import { timeZone } from "$lib/settings";
+import { timeZone } from "../../../../../../settings";
 import { json } from "@sveltejs/kit";
 import dayjs from "dayjs";
 
