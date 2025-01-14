@@ -1,54 +1,58 @@
-// import { resetPW, setUserRole } from "$lib/server/user.model.js";
-// import { json } from "@sveltejs/kit";
-// import nodemailer from "nodemailer";
-// import { EMAIL_PASSWORD } from "$env/static/private";
-// import { PUBLIC_CONTACT_EMAIL, PUBLIC_SITE_NAME } from "$env/static/public";
-// import dayjs from "dayjs";
+import { resetPW, setUserRole } from "$lib/server/user.model.js";
+import { json } from "@sveltejs/kit";
+import nodemailer from "nodemailer";
+import { EMAIL_PASSWORD } from "$env/static/private";
+import { PUBLIC_CONTACT_EMAIL, PUBLIC_SITE_NAME } from "$env/static/public";
+import dayjs from "dayjs";
 
-// const transporter = nodemailer.createTransport({
-//   host: "smtp.titan.email",
-//   port: 465,
-//   secure: true,
-//   auth: {
-//     user: PUBLIC_CONTACT_EMAIL,
-//     pass: EMAIL_PASSWORD,
-//   },
-// });
+const transporter = nodemailer.createTransport({
+  host: "smtp.titan.email",
+  port: 465,
+  secure: true,
+  auth: {
+    user: PUBLIC_CONTACT_EMAIL,
+    pass: EMAIL_PASSWORD,
+  },
+});
 
-// export async function POST({ request }) {
-//   const { userId, oldRole, newrole, selFunction, email, userName } = await request.json();
+export async function POST({ request }) {
+  const { userId, newrole, selFunction, email, userName } = await request.json();
 
-//   switch (selFunction) {
-//     case "editRole":
-//       if (userId && newrole) {
-//         await setUserRole(userId, parseInt(newrole));
-//         return json({ error: false }, { status: 201 });
-//       }
-//       break;
-//     case "resetPW":
-//       if (userId && selFunction && email) {
-//         return json({ error: "Not setup" }, { status: 400 });
-//         const newTempPassword = Math.random().toString(36).slice(2);
-//         const deadline = new Date();
-//         deadline.setDate(deadline.getDate() + 7);
-//         const {error} = await resetPW(userId, newTempPassword, deadline);
-//         if (error) {
-//           return json({ error: error }, { status: 400 });
-//         }
-//         const info = await transporter.sendMail({
-//           from: "Support <" + PUBLIC_CONTACT_EMAIL + ">",
-//           to: "eniadebisi@gmail.com",
-//           subject: "Room reservation password reset",
-//           html: "<div style='text-align: center;'> <h1> " + PUBLIC_SITE_NAME + "Reset</h1> <p>Hello, " + userName + "This will be your new temporary password: '" + newTempPassword + "'</p>  <p>You will have until " + dayjs(deadline).format() + " to reset your password from now.</p></div>",
-//         });
-//         console.log("Message sent " + info.messageId);
-//       }
+  switch (selFunction) {
+    case "editRole":
+      if (userId && newrole) {
+        let { error } = await setUserRole(userId, newrole);
 
-//       return json({ error: false }, { status: 201 });
+        if (error) {
+          return json({ error }, { status: 400 });
+        }
+        return json({ error: false }, { status: 201 });
+      }
+      break;
+    case "resetPW":
+      if (userId && selFunction && email) {
+        return json({ error: "Not setup" }, { status: 400 });
+        const newTempPassword = Math.random().toString(36).slice(2);
+        const deadline = new Date();
+        deadline.setDate(deadline.getDate() + 7);
+        const { error } = await resetPW(userId, newTempPassword, deadline);
+        if (error) {
+          return json({ error: error }, { status: 400 });
+        }
+        const info = await transporter.sendMail({
+          from: "Support <" + PUBLIC_CONTACT_EMAIL + ">",
+          to: "eniadebisi@gmail.com",
+          subject: "Room reservation password reset",
+          html: "<div style='text-align: center;'> <h1> " + PUBLIC_SITE_NAME + "Reset</h1> <p>Hello, " + userName + "This will be your new temporary password: '" + newTempPassword + "'</p>  <p>You will have until " + dayjs(deadline).format() + " to reset your password from now.</p></div>",
+        });
+        console.log("Message sent " + info.messageId);
+      }
 
-//     default:
-//       break;
-//   }
+      return json({ error: false }, { status: 201 });
 
-//   return json({ error: "Error updating roleTemp" }, { status: 400 });
-// }
+    default:
+      break;
+  }
+
+  return json({ error: "Error updating roleTemp" }, { status: 400 });
+}

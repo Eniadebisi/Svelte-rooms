@@ -60,15 +60,20 @@ export async function getUsers() {
 }
 
 export async function setUserRole(id, role) {
-  const user = await prisma.user.update({
-    where: {
-      id,
-    },
-    data: {
-      role,
-    },
-  });
-  return "Success";
+  try {
+
+    const user = await prisma.user.update({
+      where: {
+        id,
+      },
+      data: {
+        role,
+      },
+    });
+    return {error: false};
+  } catch (e) {
+    return {error: e.message}
+  }
 }
 
 export async function updatePassword(id, password) {

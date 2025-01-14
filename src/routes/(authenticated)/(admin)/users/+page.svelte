@@ -2,13 +2,17 @@
   export let data;
   import { Notifications, acts } from "@tadashi/svelte-notification";
   import { PUBLIC_SITE_NAME } from "$env/static/public";
+  import type { Roles } from "@prisma/client";
+  import { closeModal, openModal } from "svelte-modals";
+  import GenModal from "$lib/genModal.svelte";
+  import { hasPermission } from "$lib/permissions/auth.js";
+  import { user } from "$lib/user.js";
 
   async function handleRoleChange(event: Event, oldRole: string, userId: Number, userName: String) {
     const { target } = event;
     if (!target) return;
     const selFunction = "editRole";
-    let newrole = (target as HTMLSelectElement).value;
-    return;
+    let newrole: Roles = (target as HTMLSelectElement).value.toString() as Roles;
 
     const response = await fetch("/api/editUserRole", {
       method: "POST",
@@ -26,7 +30,7 @@
     }
   }
   async function handleEmailReset(event: Event, userId: Number, email: String, userName: String) {
-    if (data.user.roleTemp >= 2) {
+    if (hasPermission(data.user, "UserManagement", "update")) {
       try {
         const selFunction = "resetPW";
         return;
@@ -48,6 +52,16 @@
       }
     }
   }
+  function confirmDelUser(userId: Number, userName: String) {
+    openModal(GenModal, {
+      Title: "Confirm deleting '" + userName+"' ("+userId+")",
+      confirmButton1: true,
+      confirmButton1Func: () => {
+        console.log("Deleted user " + userId);
+        closeModal();
+      },
+    });
+  }
 
   console.assert(!!data.user);
 </script>
@@ -61,7 +75,7 @@
       <th> User Name </th>
       <th> User Email </th>
       <th> User Role </th>
-      <th> Reset </th>
+      <th> Actions </th>
     </thead>
 
     {#each data.users as user}
@@ -70,15 +84,16 @@
         <td> {user.name} </td>
         <td> {user.email} </td>
 
-          <td>
-            <select name="role" id="role" on:change={(e) => handleRoleChange(e, user.role, user.id, user.name)} value={user.role}>
-              <option value="Owner">Owner</option>
-              <option value="Admin">Admin</option>
-              <option value="User">User</option>
-              <option value="Guest">Guest</option>
-            </select>
-          </td>
-        <td> <button on:click={(e) => handleEmailReset(e, user.id, user.email, user.name)}>Reset</button> </td>
+        <td>
+          <select name="role" id="role" on:change={(e) => handleRoleChange(e, user.role, user.id, user.name)} value={user.role}>
+            <option value="Owner" disabled>Owner</option>
+            <option value="Admin">Admin</option>
+            <option value="User">User</option>
+            <option value="Guest">Guest</option>
+            <option value="Restricted">Restricted</option>
+          </select>
+        </td>
+        <td> <button on:click={(e) => handleEmailReset(e, user.id, user.email, user.name)}>Reset</button> <button on:click={(e) => confirmDelUser(user.id, user.name)}>Delete</button></td>
       </tr>
     {/each}
   </table>

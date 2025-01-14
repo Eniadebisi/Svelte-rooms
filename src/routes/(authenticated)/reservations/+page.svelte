@@ -151,7 +151,7 @@
                   on:click={() => {
                     openResvervationDetails(resv);
                   }}
-                  style="width: {resv.endTime ? (85 / 2) * (dayjs(resv.endTime).diff(resv.startTime, 'minute') / 30) : resv.length ? (85 * resv.length) / 2 : 85}px;margin-left: {85 * dayjs(resv.startTime).hour() + (dayjs(resv.startTime).minute() / 60) * 85 - 6 * 85}px;"
+                  style="width: {resv.endTime ? (85 / 2) * (dayjs(resv.endTime).diff(resv.startTime, 'minute') / 30) : 85}px;margin-left: {85 * dayjs(resv.startTime).hour() + (dayjs(resv.startTime).minute() / 60) * 85 - 6 * 85}px;"
                 >
                   {resv.title}
                 </button>

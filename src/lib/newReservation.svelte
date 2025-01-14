@@ -6,7 +6,7 @@
   dayjs.extend(utc);
   import timezone from "dayjs/plugin/timezone";
   dayjs.extend(timezone);
-  import * as rrule from 'rrule';
+  import * as rrule from "rrule";
   import { timeZone } from "./settings";
 
   export let isOpen, rooms, user: any, refresh: Function;
@@ -21,6 +21,7 @@
   let formError = false;
 
   async function submitReservation() {
+    let RecurrenceEndDate;
     const startTime = dayjs(date)
       .tz(timeZone)
       .hour(sTime / 100)
@@ -36,18 +37,20 @@
       case "":
         break;
       case "Daily":
-        RecurrencePattern = new rrule.RRule({ freq: rrule.RRule.DAILY, interval: 1, dtstart: dayjs(date).toDate(), until: recurEndDate });
+        RecurrencePattern = new rrule.RRule({ freq: rrule.RRule.DAILY, interval: 1, dtstart: dayjs(date).toDate() });
+        RecurrenceEndDate = recurEndDate;
         RecurrencePattern = RecurrencePattern.toString();
         break;
       case "Weekly":
         RecurrencePattern = new rrule.RRule({ freq: rrule.RRule.DAILY, interval: 1, dtstart: dayjs(date).toDate(), until: recurEndDate });
+        RecurrenceEndDate = recurEndDate;
         RecurrencePattern = RecurrencePattern.toString();
         break;
     }
 
     const response = await fetch("/api/newReservation", {
       method: "POST",
-      body: JSON.stringify({ roomId, userId: user.id, startTime, endTime, eventTitle, eventDetails, RecurrencePattern }),
+      body: JSON.stringify({ roomId, userId: user.id, startTime, endTime, eventTitle, eventDetails, RecurrencePattern, RecurrenceEndDate }),
     });
     const { error } = await response.json();
 

@@ -17,12 +17,9 @@ model User {
   Reservation Reservation[]
 }
 
-enum Roles {
-  Owner
-  Admin
-  User
-  Guest
-  Restricted
+model Team {
+  name String
+  id   Int    @id @default(autoincrement())
 }
 
 model Room {
@@ -38,17 +35,17 @@ model Room {
 }
 
 model Reservation {
-  id         Int         @id @default(autoincrement())
-  roomId     Int
-  userId     Int
-  startTime  DateTime
-  details    String      @db.VarChar(200)
-  length     Int?
-  title      String      @db.VarChar(50)
-  endTime    DateTime
+  id                Int       @id @default(autoincrement())
+  roomId            Int
+  userId            Int
+  startTime         DateTime
+  details           String    @db.VarChar(200)
+  title             String    @db.VarChar(50)
+  endTime           DateTime
   RecurrencePattern String?
-  Room       Room        @relation(fields: [roomId], references: [id])
-  user       User        @relation(fields: [userId], references: [id])
+  RecurrenceEndDate DateTime?
+  Room              Room      @relation(fields: [roomId], references: [id])
+  user              User      @relation(fields: [userId], references: [id])
 
   @@index([roomId], map: "Reservation_roomId_fkey")
   @@index([userId], map: "Reservation_userId_fkey")
@@ -58,4 +55,12 @@ model Location {
   id    Int    @id @default(autoincrement())
   name  String @unique @db.VarChar(50)
   rooms Room[]
+}
+
+enum Roles {
+  Owner
+  Admin
+  User
+  Guest
+  Restricted
 }

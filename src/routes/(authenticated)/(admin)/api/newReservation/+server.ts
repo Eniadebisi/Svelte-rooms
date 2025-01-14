@@ -4,7 +4,7 @@ import { json } from "@sveltejs/kit";
 import dayjs from "dayjs";
 
 export async function POST({ request }) {
-  const { roomId, userId, startTime: start, endTime: end, eventTitle, eventDetails, RecurrencePattern } = await request.json();
+  const { roomId, userId, startTime: start, endTime: end, eventTitle, eventDetails, RecurrencePattern, RecurrenceEndDate } = await request.json();
 
   if (!roomId || parseInt(roomId) < 0 || !userId || !start || !end || !eventTitle || !eventDetails) {
     return json({ error: "Missing one or more details" }, { status: 400 });
@@ -14,7 +14,7 @@ export async function POST({ request }) {
     return json({ error: "End time must be after start time." }, { status: 400 });
   }
   
-  if (RecurrencePattern && !RecurrencePattern.includes("UNTIL")) {
+  if (RecurrencePattern && !RecurrenceEndDate) {
     return json({ error: "If you include recurrence, please include end date." }, { status: 400 });
   }
 
@@ -26,7 +26,7 @@ export async function POST({ request }) {
   // return json({ error: "Passed" }, { status: 400 });
 
 
-  const { error } = await reserveRoom(roomId, userId, start, end, eventTitle, eventDetails, RecurrencePattern);
+  const { error } = await reserveRoom(roomId, userId, start, end, eventTitle, eventDetails, RecurrencePattern, RecurrenceEndDate);
   if (error) {
     return json({ error }, { status: 400 });
   }

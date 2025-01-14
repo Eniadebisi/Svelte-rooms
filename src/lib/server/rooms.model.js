@@ -103,7 +103,7 @@ export async function editLocation(locationId, name) {
   }
 }
 
-export async function reserveRoom(roomId, userId, startTime, endTime, title, details, RecurrencePattern) {
+export async function reserveRoom(roomId, userId, startTime, endTime, title, details, RecurrencePattern, RecurrenceEndDate) {
   try {
     if (await checkAvailability(roomId, startTime, endTime)) {
       await prisma.reservation.create({
@@ -115,6 +115,7 @@ export async function reserveRoom(roomId, userId, startTime, endTime, title, det
           title,
           details,
           RecurrencePattern,
+          RecurrenceEndDate,
         },
       });
       // console.log(roomId, userId, startTime, endTime, title, details);
