@@ -1,12 +1,10 @@
 <script lang="ts">
   export let data;
   import { Notifications, acts } from "@tadashi/svelte-notification";
-  import { PUBLIC_SITE_NAME } from "$env/static/public";
   import type { Roles } from "@prisma/client";
   import { closeModal, openModal } from "svelte-modals";
   import GenModal from "$lib/genModal.svelte";
   import { hasPermission } from "$lib/permissions/auth.js";
-  import { user } from "$lib/user.js";
 
   async function handleRoleChange(event: Event, oldRole: string, userId: Number, userName: String) {
     const { target } = event;
