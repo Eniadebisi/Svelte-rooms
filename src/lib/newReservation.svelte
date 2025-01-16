@@ -33,19 +33,10 @@
       .hour(eTime / 100)
       .minute(eTime % 100)
       .toISOString();
-    switch (recur) {
-      case "":
-        break;
-      case "Daily":
-        RecurrencePattern = new rrule.RRule({ freq: rrule.RRule.DAILY, interval: 1, dtstart: dayjs(date).toDate() });
-        RecurrenceEndDate = recurEndDate;
-        RecurrencePattern = RecurrencePattern.toString();
-        break;
-      case "Weekly":
-        RecurrencePattern = new rrule.RRule({ freq: rrule.RRule.DAILY, interval: 1, dtstart: dayjs(date).toDate(), until: recurEndDate });
-        RecurrenceEndDate = recurEndDate;
-        RecurrencePattern = RecurrencePattern.toString();
-        break;
+
+    if (recur) {
+      RecurrencePattern = recur == "Weekly" ? dayjs(startTime).format("dddd") : "Daily";
+      RecurrenceEndDate = dayjs(recurEndDate).tz(timeZone).endOf("day").utc();
     }
 
     const response = await fetch("/api/newReservation", {
@@ -101,22 +92,20 @@
           </select>
         </div>
 
-        {#if hasPermission(user, "UserManagement", "update")}
-          <div class="m-1">
-            <label for="recur">Recur:</label>
-            <select name="recur" id="recur" bind:value={recur}>
-              <option value="" selected>Does not repeat</option>
-              <option value="Daily">Daily</option>
-              <option value="Weekly">Weekly on {dayjs(date).format("dddd")}</option>
-            </select>
-          </div>
+        <div class="m-1">
+          <label for="recur">Recur:</label>
+          <select name="recur" id="recur" bind:value={recur}>
+            <option value="" selected>Does not repeat</option>
+            <option value="Daily">Daily</option>
+            <option value="Weekly">Weekly on {dayjs(date).format("dddd")}</option>
+          </select>
+        </div>
 
-          {#if recur}
-            <div class="m-1">
-              <label for="recurEndDate">End Date:</label>
-              <input type="date" name="recurEndDate" id="recurEndDate" bind:value={recurEndDate} />
-            </div>
-          {/if}
+        {#if recur}
+          <div class="m-1">
+            <label for="recurEndDate">End Date:</label>
+            <input type="date" name="recurEndDate" id="recurEndDate" bind:value={recurEndDate} />
+          </div>
         {/if}
       </div>
 
