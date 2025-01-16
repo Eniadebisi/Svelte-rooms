@@ -9,7 +9,9 @@
   import * as rrule from "rrule";
   import { timeZone } from "./settings";
   import { hasPermission, type User } from "./permissions/auth";
+  import { hasPermission, type User } from "./permissions/auth";
 
+  export let isOpen, rooms, user: User, refresh: Function;
   export let isOpen, rooms, user: User, refresh: Function;
   let date = dayjs(new Date()).format("YYYY-MM-DD");
   let roomId: number,
@@ -23,6 +25,7 @@
 
   async function submitReservation() {
     let RecurrenceEndDate, RecurrencePattern;
+    let RecurrenceEndDate, RecurrencePattern;
     const startTime = dayjs(date)
       .tz(timeZone)
       .hour(sTime / 100)
@@ -35,8 +38,8 @@
       .toISOString();
 
     if (recur) {
-      RecurrencePattern = recur == "Weekly" ? dayjs(startTime).format("dddd") : "Daily";
-      RecurrenceEndDate = dayjs(recurEndDate).tz(timeZone).endOf("day").utc();
+      RecurrencePattern = recur == "Weekly" ? dayjs(startTime).format("dddd") : "Daily"
+      RecurrenceEndDate = dayjs(recurEndDate).tz(timeZone).endOf("day").utc()
     }
 
     const response = await fetch("/api/newReservation", {
@@ -92,20 +95,22 @@
           </select>
         </div>
 
-        <div class="m-1">
-          <label for="recur">Recur:</label>
-          <select name="recur" id="recur" bind:value={recur}>
-            <option value="" selected>Does not repeat</option>
-            <option value="Daily">Daily</option>
-            <option value="Weekly">Weekly on {dayjs(date).format("dddd")}</option>
-          </select>
-        </div>
-
-        {#if recur}
+        {#if hasPermission(user, "UserManagement", "update")}
           <div class="m-1">
-            <label for="recurEndDate">End Date:</label>
-            <input type="date" name="recurEndDate" id="recurEndDate" bind:value={recurEndDate} />
+            <label for="recur">Recur:</label>
+            <select name="recur" id="recur" bind:value={recur}>
+              <option value="" selected>Does not repeat</option>
+              <option value="Daily">Daily</option>
+              <option value="Weekly">Weekly on {dayjs(date).format("dddd")}</option>
+            </select>
           </div>
+
+          {#if recur}
+            <div class="m-1">
+              <label for="recurEndDate">End Date:</label>
+              <input type="date" name="recurEndDate" id="recurEndDate" bind:value={recurEndDate} />
+            </div>
+          {/if}
         {/if}
       </div>
 
