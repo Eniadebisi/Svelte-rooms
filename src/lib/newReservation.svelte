@@ -35,8 +35,8 @@
       .toISOString();
 
     if (recur) {
-      RecurrencePattern = recur == "Weekly" ? dayjs(startTime).format("dddd") : "Daily"
-      RecurrenceEndDate = dayjs(recurEndDate).tz(timeZone).endOf("day").utc()
+      RecurrencePattern = recur == "Weekly" ? dayjs(startTime).format("dddd") : "Daily";
+      RecurrenceEndDate = dayjs(recurEndDate).tz(timeZone).endOf("day").utc();
     }
 
     const response = await fetch("/api/newReservation", {
@@ -92,22 +92,20 @@
           </select>
         </div>
 
-        {#if hasPermission(user, "UserManagement", "update")}
-          <div class="m-1">
-            <label for="recur">Recur:</label>
-            <select name="recur" id="recur" bind:value={recur}>
-              <option value="" selected>Does not repeat</option>
-              <option value="Daily">Daily</option>
-              <option value="Weekly">Weekly on {dayjs(date).format("dddd")}</option>
-            </select>
-          </div>
+        <div class="m-1">
+          <label for="recur">Recur:</label>
+          <select name="recur" id="recur" bind:value={recur}>
+            <option value="" selected>Does not repeat</option>
+            <option value="Daily">Daily</option>
+            <option value="Weekly">Weekly on {dayjs(date).format("dddd")}</option>
+          </select>
+        </div>
 
-          {#if recur}
-            <div class="m-1">
-              <label for="recurEndDate">End Date:</label>
-              <input type="date" name="recurEndDate" id="recurEndDate" bind:value={recurEndDate} />
-            </div>
-          {/if}
+        {#if recur}
+          <div class="m-1">
+            <label for="recurEndDate">End Date:</label>
+            <input type="date" name="recurEndDate" id="recurEndDate" bind:value={recurEndDate} />
+          </div>
         {/if}
       </div>
 
