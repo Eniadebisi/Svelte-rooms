@@ -9,7 +9,9 @@ dayjs.extend(timezone);
 
 export async function getReservations(start, end) {
   let reservations = await prisma.reservation.findMany({
-    where: { startTime: { gte: start, lte: end } },
+    where: {
+      OR: [{ startTime: { gte: start, lte: end } }, { startTime: { lt: start }, RecurrencePattern: dayjs(start).format("dddd"), RecurrenceEndDate: { gte: end } }, { startTime: { lt: start }, RecurrencePattern: "Daily", RecurrenceEndDate: { gte: end } }],
+    },
     include: {
       user: {
         select: {

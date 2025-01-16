@@ -16,7 +16,6 @@
   let reservations = data.reservations;
 
   async function updateReserv(nDate: Date) {
-    // dayjs(nDate).startOf("day"), dayjs(nDate).endOf("day")
     const response = await fetch("/api/reservationData", {
       method: "POST",
       body: JSON.stringify({ nDate }),
@@ -94,6 +93,7 @@
           id="date"
           bind:value={staticDate}
           on:change={() => {
+            date = dayjs(staticDate).toDate()
             updateReserv(date);
           }}
         />
