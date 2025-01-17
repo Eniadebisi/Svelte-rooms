@@ -158,7 +158,7 @@ export async function delReservation(id) {
     });
 
     if (!reservation) {
-      throw new Error(`Reservation with id ${reservationId} does not exist.`);
+      throw new Error(`Reservation with id ${id} does not exist.`);
     }
 
     await prisma.reservation.delete({
@@ -169,6 +169,6 @@ export async function delReservation(id) {
 
     return { error: false };
   } catch (error) {
-    return { success: false, message: `Failed to delete resv${reservationId}` + error };
+    return { success: false, message: `Failed to delete resv${id}` + error };
   }
 }

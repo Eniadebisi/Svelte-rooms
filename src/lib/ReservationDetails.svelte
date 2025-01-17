@@ -22,7 +22,7 @@
       if (error) {
         formError = error;
       } else {
-        refresh(resvObj.startTime.toISOString());
+        refresh(resvObj.startTime);
       }
     } else {
       notify("warn", "Cannot delete another user's reservation");
@@ -43,6 +43,10 @@
           Date: {dayjs(resvObj.startTime).format("dddd, MMMM D, YYYY")}
           <br />
           Time: {(dayjs(resvObj.startTime).hour() * 100 + dayjs(resvObj.startTime).minute()).toString().padStart(4, "0")} - {(dayjs(resvObj.endTime).hour() * 100 + dayjs(resvObj.endTime).minute()).toString().padStart(4, "0")}
+          <br>
+          {#if resvObj.RecurrenceEndDate}
+            Repeats {resvObj.RecurrencePattern == "Weekly" ? "Weekly" : "every " + resvObj.RecurrencePattern} until {dayjs(resvObj.RecurrenceEndDate).format("MMMM DD")}
+          {/if}
         </div>
         <div class="items-center px-4 py-3">
           <button on:click={closeModal} class=""> Close </button>
