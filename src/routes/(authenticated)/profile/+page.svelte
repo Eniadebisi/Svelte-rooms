@@ -86,10 +86,4 @@
     justify-content: center;
     align-items: center;
   }
-  
-  .error {
-    border-color: red;
-    font-style: italic;
-    color: orangered;
-  }
 </style>

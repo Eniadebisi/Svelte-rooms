@@ -1,5 +1,6 @@
 import { getLocations, getReservations, getRooms } from "$lib/server/rooms.model";
-import { timeZone } from "../../../../settings";
+import { timeZone } from "$lib/settings";
+
 import dayjs from "dayjs";
 import timezone from "dayjs/plugin/timezone";
 dayjs.extend(timezone);

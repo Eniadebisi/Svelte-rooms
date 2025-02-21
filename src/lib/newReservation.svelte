@@ -6,12 +6,9 @@
   dayjs.extend(utc);
   import timezone from "dayjs/plugin/timezone";
   dayjs.extend(timezone);
-  import * as rrule from "rrule";
-  import { timeZone } from "./settings";
-  import { hasPermission, type User } from "./permissions/auth";
+  import { timeZone } from "$lib/settings";
   import { hasPermission, type User } from "./permissions/auth";
 
-  export let isOpen, rooms, user: User, refresh: Function;
   export let isOpen, rooms, user: User, refresh: Function;
   let date = dayjs(new Date()).format("YYYY-MM-DD");
   let roomId: number,
@@ -24,7 +21,6 @@
   let formError = false;
 
   async function submitReservation() {
-    let RecurrenceEndDate, RecurrencePattern;
     let RecurrenceEndDate, RecurrencePattern;
     const startTime = dayjs(date)
       .tz(timeZone)
