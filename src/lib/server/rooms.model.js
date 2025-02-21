@@ -135,12 +135,27 @@ export async function checkAvailability(roomId, start, end) {
   try {
     // console.log("Check availability " + dayjs(start).toISOString() + "-" + dayjs(end).toISOString());
 
-    const overlapping = await prisma.reservation.findFirst({
-      where: { roomId, OR: [{ startTime: { lt: end }, endTime: { gt: start } }] },
+    const overlapping = await prisma.reservation.findMany({
+      where: {
+        roomId,
+        OR: [
+          { startTime: { lt: end }, endTime: { gt: start } },
+          { startTime: { lt: start }, RecurrencePattern: dayjs(start).format("dddd"), RecurrenceEndDate: { gte: end } },
+          { startTime: { lt: start }, RecurrencePattern: "Daily", RecurrenceEndDate: { gte: end } },
+        ],
+      },
     });
 
-    if (overlapping) {
-      return { error: "Time not available to reservations at that time." };
+    const startHHMM = dayjs(start).hour() + dayjs(start).minute() / 60;
+    const endHHMM = dayjs(end).hour() + dayjs(end).minute() / 60;
+
+    for (const resv of overlapping) {
+      const resvStartHHMM = dayjs(resv.startTime).hour() + dayjs(resv.startTime).minute() / 60;
+      const resvEndHHMM = dayjs(resv.endTime).hour() + dayjs(resv.endTime).minute() / 60;
+
+      if (resvStartHHMM < endHHMM && resvEndHHMM > startHHMM) {
+        return { error: "Time not available to reservations at that time." };
+      }
     }
 
     return { error: false };

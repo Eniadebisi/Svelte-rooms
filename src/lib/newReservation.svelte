@@ -21,6 +21,8 @@
   let formError = false;
 
   async function submitReservation() {
+    // console.log("Form submitted");
+    
     let RecurrenceEndDate, RecurrencePattern;
     const startTime = dayjs(date)
       .tz(timeZone)
