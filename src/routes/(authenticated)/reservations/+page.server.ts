@@ -20,8 +20,9 @@ export async function load({ parent, url }) {
     end = dayjs(date).tz(timeZone).endOf("day").utc();
   }
   
-  const { rooms, error: roomError } = await getRooms();
+  let { rooms, error: roomError } = await getRooms();
   if (roomError || !rooms) throw new Error();
+  rooms = rooms.sort((a, b) => a.name.localeCompare(b.name))
 
   const { locations, error: locError } = await getLocations();
   if (locError || !locations) throw new Error();

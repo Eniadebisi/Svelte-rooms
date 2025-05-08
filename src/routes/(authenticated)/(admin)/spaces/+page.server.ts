@@ -10,8 +10,10 @@ export const load = (async ({locals}) => {
 
   if (!user) throw error(400, { message: "Restricted" });
 
-  const { rooms } = await getRooms();
+  let { rooms } = await getRooms();
   if (!rooms) throw new Error();
+  rooms = rooms.sort((a, b) => a.name.localeCompare(b.name));
+
 
   const { locations } = await getLocations();
   if (!locations) throw new Error();
