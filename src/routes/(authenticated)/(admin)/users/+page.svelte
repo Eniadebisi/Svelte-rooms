@@ -55,7 +55,6 @@
       Title: "Confirm deleting '" + userName+"' ("+userId+")",
       confirmButton1: true,
       confirmButton1Func: () => {
-        console.log("Deleted user " + userId);
         closeModal();
       },
     });

@@ -69,7 +69,6 @@
       },
     });
   }
-
 </script>
 
 <div class="px-4 py-1 mt-1 text-center d-flex flex-column align-items-center">
@@ -93,7 +92,7 @@
           id="date"
           bind:value={staticDate}
           on:change={() => {
-            date = dayjs(staticDate).toDate()
+            date = dayjs(staticDate).toDate();
             updateReserv(date);
           }}
         />
@@ -122,7 +121,7 @@
           <div class="lCell locHeaderColor">{loc.name}</div>
 
           {#each data.rooms.filter((room) => room.locationId === loc.id) as room}
-            <div class="lCell roomHeaderColor">
+            <div class="lCell roomHeaderColor" title={room.details}>
               {room.name}
             </div>
           {/each}
