@@ -26,18 +26,23 @@ export async function getReservations(start, end) {
   return { reservations, error: false };
 }
 
-export async function getRooms() {
+export async function getRooms(level = 0) {
   try {
-    let rooms = await prisma.room.findMany({});
+    let rooms = await prisma.room.findMany({
+      where: { location: { visibility: level == 1 ? { gte: 0 } : { equals: 0} } },
+      include: { location: true },
+    });
 
     return { rooms, error: false };
   } catch (e) {
     return { error: e.message };
   }
 }
-export async function getLocations() {
+export async function getLocations(level = 0) {
   try {
-    let locations = await prisma.location.findMany({});
+    let locations = await prisma.location.findMany({
+      where: { visibility: level == 1 ? { gte: 0 } : { equals: 0} },
+    });
 
     return { locations, error: false };
   } catch (e) {
@@ -92,12 +97,18 @@ export async function editRoom(roomId, uname, usize, ulocationId, udetails) {
     return { error: e.message };
   }
 }
-export async function editLocation(locationId, name) {
+export async function editLocation(locationId, name, visibility) {
   try {
-    await prisma.location.update({
-      where: { id: locationId },
-      data: { name },
-    });
+    await prisma.$transaction([
+      prisma.location.update({
+        where: { id: locationId },
+        data: name & name !== "" ? { name } : {},
+      }),
+      prisma.location.update({
+        where: { id: locationId },
+        data: visibility && visibility !== "" ? { visibility } : {},
+      }),
+    ]);
 
     return { error: false };
   } catch (e) {

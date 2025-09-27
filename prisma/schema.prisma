@@ -55,6 +55,7 @@ model Location {
   id    Int    @id @default(autoincrement())
   name  String @unique @db.VarChar(50)
   rooms Room[]
+  visibility Int @default(0) // 0 = public, 1 = private
 }
 
 enum Roles {

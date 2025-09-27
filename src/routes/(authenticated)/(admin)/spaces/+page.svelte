@@ -28,7 +28,7 @@
       </thead>
       {#each data.locations as location}
         <tr>
-          <th>{location.name}</th>
+          <th>{`${location.name} (${location.visibility ? "Hidden" : "Visible"})`}</th>
           {#each data.rooms.filter((room) => room.locationId === location.id) as room}
             <div class="d-flex flex-column">
               <td> {room.name} - {room.size} ppl - {room.details} </td>
@@ -119,7 +119,15 @@
             <label for="updatedLocName">Update Loc Name:</label>
             <input type="text" id="updatedLocName" name="updatedLocName" />
           </div>
-
+          <div>
+            <label for="visibility">Visibility:</label>
+            <select id="visibility" name="visibility">
+              <option value="" disabled selected>Select one...</option>
+              <option value="0">Visible</option>
+              <option value="1">Hidden</option>
+            </select>
+          </div>
+          
           {#if form?.error && form.form == "editLocation"}
             <div class="notice error m-2">
               {form.error}
