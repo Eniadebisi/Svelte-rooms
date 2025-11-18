@@ -4,10 +4,9 @@
   import dayjs from "dayjs";
   import AdvancedFormat from "dayjs/plugin/advancedFormat";
   dayjs.extend(AdvancedFormat);
-  import type { Reservation } from "@prisma/client";
   import { hasPermission, type User } from "./permissions/auth";
 
-  export let isOpen, resvObj: Reservation, openEditResv, refresh: Function, user: User, notify: Function;
+  export let isOpen, resvObj: EnhancedReservation, openEditResv, refresh: Function, user: User, notify: Function;
   let formError = "";
 
   async function deleteReservation() {
@@ -35,15 +34,16 @@
     <div class="contents">
       <div class="mt-3 text-center" transition:scale={{ duration: 200 }}>
         <h3 class="">{resvObj.title}</h3>
+        <h6 title={resvObj.Room.details}>{`${resvObj.Room.name} - Size ${resvObj.Room.size}`}</h6>
         <div class="mt-2 px-7 py-3">
-          User : {resvObj.userId}
+          User : {resvObj.user.name}
           <br />
           Details: {resvObj.details}
           <br />
           Date: {dayjs(resvObj.startTime).format("dddd, MMMM D, YYYY")}
           <br />
           Time: {(dayjs(resvObj.startTime).hour() * 100 + dayjs(resvObj.startTime).minute()).toString().padStart(4, "0")} - {(dayjs(resvObj.endTime).hour() * 100 + dayjs(resvObj.endTime).minute()).toString().padStart(4, "0")}
-          <br>
+          <br />
           {#if resvObj.RecurrenceEndDate}
             Repeats {resvObj.RecurrencePattern == "Weekly" ? "Weekly" : "every " + resvObj.RecurrencePattern} until {dayjs(resvObj.RecurrenceEndDate).format("MMMM DD")}
           {/if}

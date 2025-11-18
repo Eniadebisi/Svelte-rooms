@@ -8,8 +8,7 @@
   import { timeZone } from "$lib/settings";
   import NewReservation from "$lib/newReservation.svelte";
   import { acts, Notifications } from "@tadashi/svelte-notification";
-  import type { Reservation } from "@prisma/client";
-
+  
   export let data: PageData;
   let date = data.date ? data.date : new Date();
   let staticDate = dayjs(date).format("YYYY-MM-DD");
@@ -26,7 +25,7 @@
     const { reservations: resv, start, end } = await response.json();
     reservations = resv;
   }
-  function openResvervationDetails(resvObj: Reservation) {
+  function openResvervationDetails(resvObj: EnhancedReservation) {
     openModal(ReservationDetails, {
       resvObj,
       user: data.user,
@@ -45,7 +44,7 @@
       },
     });
   }
-  function openReservationEdit(resvObj: Reservation) {
+  function openReservationEdit(resvObj: EnhancedReservation) {
     openModal(ReservationEdit, {
       resvObj,
       rooms: data.rooms,

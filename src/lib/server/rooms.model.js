@@ -19,6 +19,7 @@ export async function getReservations(start, end) {
           role: true,
         },
       },
+      Room: true,
     },
   });
 
@@ -29,7 +30,7 @@ export async function getReservations(start, end) {
 export async function getRooms(level = 0) {
   try {
     let rooms = await prisma.room.findMany({
-      where: { location: { visibility: level == 1 ? { gte: 0 } : { equals: 0} } },
+      where: { location: { visibility: level == 1 ? { gte: 0 } : { equals: 0 } } },
       include: { location: true },
     });
 
@@ -41,7 +42,7 @@ export async function getRooms(level = 0) {
 export async function getLocations(level = 0) {
   try {
     let locations = await prisma.location.findMany({
-      where: { visibility: level == 1 ? { gte: 0 } : { equals: 0} },
+      where: { visibility: level == 1 ? { gte: 0 } : { equals: 0 } },
     });
 
     return { locations, error: false };
@@ -102,7 +103,7 @@ export async function editLocation(locationId, name, visibility) {
     await prisma.$transaction([
       prisma.location.update({
         where: { id: locationId },
-        data: name & name !== "" ? { name } : {},
+        data: name & (name !== "") ? { name } : {},
       }),
       prisma.location.update({
         where: { id: locationId },
