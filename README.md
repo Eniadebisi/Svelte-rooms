@@ -1,64 +1,120 @@
-# Svelte Room Reservation
+# Svelte Rooms Reservations
 
-Welcome to **Svelte Room Reservation**! This is a modern room reservation application built with Svelte and powered by Vite. It leverages Prisma for database interactions and various other libraries to provide a seamless and efficient user experience.
+A full-stack room reservation system built with **Svelte + SvelteKit**, **Prisma 7**, and **MariaDB**. Handles user authentication, role-based access control, space management, recurring reservations, and admin operations.
 
 ## Table of Contents
 
 - [Features](#features)
-- [Installation](#installation)
-- [Usage](#usage)
-- [Development](#development)
-- [Contributing](#contributing)
-- [License](#license)
+- [Architecture](#architecture)
+- [Tech Stack](#tech-stack)
+- [Setup](#setup)
+- [API Surface](#api-surface)
+- [Data Models](#data-models)
+- [Key Patterns](#key-patterns)
 
 ## Features
 
-- **Svelte**: A modern UI framework for building fast and reactive interfaces.
-- **Vite**: A fast build tool for optimized development and production workflows.
-- **Prisma**: ORM for easy and type-safe database access.
-- **Bootstrap**: For responsive and mobile-first design.
-- **Day.js**: For handling dates and times in a concise and efficient manner.
-- **Authentication**: Secure user authentication with JSON Web Tokens.
-- **Notifications**: Real-time notifications for user actions.
+### Core Functionality
 
-## Installation
+- **Authentication** - JWT-based user sessions with bcrypt password hashing
+- **Role-Based Access Control** - Five roles (Owner, Admin, User, Guest, Restricted) with permission checks
+- **Space Management** - CRUD operations for rooms/spaces with locations
+- **Reservations** - Booking system with date/time selection and recurring patterns (via rrule)
+- **Admin Operations** - User role assignment, space management, mass reservation viewing/deletion
+- **Email Notifications** - Nodemailer integration for confirmations and updates
 
-To get started with Svelte Room Reservation, follow these steps:
+### Technical Capabilities
 
-1. **Clone the Repository:**
+- Type-safe database access via Prisma 7 (ESM client)
+- Server-side rendering with SvelteKit
+- Responsive UI with Bootstrap 5
+- Connection pooling optimized for shared hosting (connectionLimit: 1)
+- Sass preprocessing with modern API
+- Test coverage for authorization logic (Vitest)
 
-```bash
-git clone https://github.com/Eniadebisi/Svelte-rooms.git
+## Architecture
+
+### Authentication & Authorization
+
+- **Session Flow:** Login form → JWT token stored in cookie → Checked via [src/hooks.server.ts](src/hooks.server.ts) on protected routes
+- **Permission System:** `hasPermission(user.role, requiredRole)` in [src/lib/permissions/auth.ts](src/lib/permissions/auth.ts)
+- **Protected Routes:** All routes under `src/routes/(authenticated)/` require valid JWT
+- **Admin-Only Routes:** Routes under `src/routes/(authenticated)/(admin)/` check for Admin/Owner role
+
+### API Route Pattern
+
+```
+src/routes/(authenticated)/(admin)/api/{action}/+server.ts
+├── POST handler accepts request
+├── Validates user permissions
+├── Calls database model (e.g., user.model.js, rooms.model.js)
+└── Returns JSON response
 ```
 
-2. **Navigate to the Project Directory:**
+### Database Query Organization
 
-```bash
-cd svelte-room-reservation
+- **[src/lib/server/user.model.js](src/lib/server/user.model.js)** - User queries (findUser, createUser, updateRole)
+- **[src/lib/server/rooms.model.js](src/lib/server/rooms.model.js)** - Room queries (findRooms, createRoom, deleteRoom)
+- **Prisma Client** - Instantiated in [src/lib/server/db.ts](src/lib/server/db.ts) with MariaDB adapter
+
+### Data Flow
+
+```
+SvelteKit Route (+page.server.ts)
+  → Server Load Function or Form Action
+    → Calls Model (user.model.js, rooms.model.js)
+      → Uses PrismaClient
+        → Returns data/result to component
 ```
 
-3. **Install Dependencies:**
+## Tech Stack
 
-```bash
-npm install
-```
+| Layer              | Technology              | Version | Notes                                 |
+| ------------------ | ----------------------- | ------- | ------------------------------------- |
+| Frontend Framework | Svelte                  | 4.2.7   | Reactive components, minimal overhead |
+| Meta Framework     | SvelteKit               | 2.50.1  | SSR, routing, server routes           |
+| Build Tool         | Vite                    | 5.4.6   | ESM-based, zero-config                |
+| ORM                | Prisma                  | 7.3.0   | ESM client (90% smaller bundle)       |
+| DB Adapter         | @prisma/adapter-mariadb | 7.3.0   | Native MariaDB connection pooling     |
+| DB Driver          | mysql2                  | 3.16.1  | MySQL protocol implementation         |
+| Authentication     | jsonwebtoken + bcrypt   | 6.0.0   | JWT sessions, password hashing        |
+| Email              | Nodemailer              | 7.0.12  | SMTP integration                      |
+| Utilities          | Day.js + rrule          | -       | Date handling, recurring patterns     |
+| Styling            | Bootstrap 5 + SCSS      | 5.3.3   | Component library, modern CSS API     |
+| Testing            | Vitest                  | 4.0.18  | Fast unit tests, ESM-native           |
+| Type Safety        | TypeScript              | 5.0.0   | Full codebase type checking           |
+| Node               | -                       | 20.x    | Required version                      |
 
-## Development
+## API Surface
 
-### Prerequisites
+### Server Routes (API Endpoints)
 
-- Node.js (version 18 or above)
-- npm (version 9 or above)
+**Admin Routes** - All under `src/routes/(authenticated)/(admin)/api/`
 
-### Tools and Libraries
+| Endpoint                 | Method | Purpose                   |
+| ------------------------ | ------ | ------------------------- |
+| `/api/newReservation`    | POST   | Create reservation        |
+| `/api/deleteReservation` | POST   | Delete reservation        |
+| `/api/reservationData`   | POST   | Fetch reservation details |
+| `/api/deleteRoom`        | POST   | Delete space/room         |
+| `/api/editUserRole`      | POST   | Update user role          |
 
-- SvelteKit: Framework for building Svelte applications.
-- Vite: Build tool for a fast and optimized development experience.
-- [Vitest](https://vitest.dev/guide/)
-- Prisma: ORM for database interactions.
-- Bootstrap: CSS framework for styling.
-- Day.js: Library for date and time manipulation.
-- jsonwebtoken: Library for handling JSON Web Tokens.
+All routes validate user permissions before executing.
 
-License
-This project is licensed under the MIT License. See the LICENSE file for details.
+See [prisma/schema.prisma](prisma/schema.prisma) for full schema.
+
+## User Roles & Permissions
+
+| Role       | User Mgmt       | Space Mgmt | Reservations        | Admin Access |
+| ---------- | --------------- | ---------- | ------------------- | ------------ |
+| Owner      | ✅ Full         | ✅ Full    | ✅ Full             | ✅ Yes       |
+| Admin      | ✅ Assign roles | ✅ CRUD    | ✅ View all, delete | ✅ Yes       |
+| User       | ❌              | ❌         | ✅ Own only         | ❌           |
+| Guest      | ❌              | ❌         | ✅ View own         | ❌           |
+| Restricted | No access       |
+
+Check [src/lib/permissions/auth.ts](src/lib/permissions/auth.ts) for enforcement.
+
+## License
+
+MIT License. See LICENSE file for details.
