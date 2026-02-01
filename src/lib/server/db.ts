@@ -5,10 +5,11 @@ import { PrismaMariaDb } from "@prisma/adapter-mariadb";
 const adapter = new PrismaMariaDb({
   database: process.env.DB_NAME,
   host: process.env.DB_HOST,
-  port: parseInt(process.env.DB_PORT || "3306"),
+  port: process.env.DB_PORT ? parseInt(process.env.DB_PORT) : undefined,
   user: process.env.DB_USER,
   password: process.env.DB_PASSWORD,
   connectionLimit: 5,
+  allowPublicKeyRetrieval: true,
 });
 
 export const prisma = new PrismaClient({
