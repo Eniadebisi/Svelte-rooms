@@ -110,9 +110,9 @@
     </div>
   </div>
 
-  <div class="w-100">
-    <div class="d-flex overflow-x-hidden mt-3 border border-2 border-dark">
-      <div class="rowStart">
+  <div class="w-100 align-content-center">
+    <div class="d-flex overflow-x-hidden mt-3">
+      <div class="rowStart border-2 border-dark border-top border-bottom border-start">
         <div class="lCell Locations">Locations</div>
         {#each data.locations as loc}
           <div class="lCell locHeaderColor">{loc.name}</div>
@@ -124,7 +124,7 @@
           {/each}
         {/each}
       </div>
-      <div class="rowEnd overflow-x-scroll">
+      <div class="rowEnd overflow-x-scroll border-2 border-dark border-top border-bottom border-end">
         <div class="tableRow">
           {#each Array(18) as _, i}
             <div class="rCell time-header">{i + 6}:00</div>
