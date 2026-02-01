@@ -2,6 +2,11 @@ import "dotenv/config";
 import { PrismaClient } from "../../../prisma/generated/client";
 import { PrismaMariaDb } from "@prisma/adapter-mariadb";
 
+declare global {
+  // eslint-disable-next-line no-var
+  var prisma: PrismaClient | undefined;
+}
+
 const adapter = new PrismaMariaDb({
   database: process.env.DB_NAME,
   host: process.env.DB_HOST,
@@ -12,7 +17,7 @@ const adapter = new PrismaMariaDb({
   allowPublicKeyRetrieval: true,
 });
 
-export const prisma = new PrismaClient({
+export const prisma = global.prisma || new PrismaClient({
   adapter,
   log: ["info", "warn", "error"],
 });

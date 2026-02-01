@@ -100,8 +100,6 @@ src/
 │   │   └── hasPermissions.test.ts  # Permission tests
 │   ├── settings.ts                 # App config constants
 │   ├── emails.ts                   # Email template functions
-│   └── prisma/
-│       └── server.ts               # Prisma utilities
 ├── scss/
 │   └── styles.scss                 # Global SCSS styles
 ├── auth.js                         # Authentication middleware
