@@ -6,10 +6,9 @@
     "dev": "vite dev",
     "build": "vite build",
     "preview": "vite preview",
-    "prepare": "svelte-kit sync",
+    "prepare": "svelte-kit sync && prisma generate",
     "check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
     "check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch",
-    "postinstall": "prisma generate",
     "lint": "eslint .",
     "test": "vitest"
   },
