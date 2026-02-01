@@ -1,10 +1,10 @@
 <script lang="ts">
   import { enhance } from "$app/forms";
-  import { PUBLIC_SITE_NAME } from "$env/static/public";
   import type { ActionData, PageData } from "./$types";
   import { goto } from "$app/navigation";
 
-  // export let data: PageData;
+  export let data: PageData;
+  const { PUBLIC_SITE_NAME } = data;
   let showPW = false;
   function togglePW() {
     showPW = !showPW;

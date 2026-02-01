@@ -13,9 +13,7 @@ export const actions: Actions = {
   default: async ({ cookies, request }) => {
     const data = Object.fromEntries(await request.formData());
 
-    const email = data.email;
-    const password = data.password;
-    const name = data.name;
+    const {email, password, name} = data;
 
     if (!email || !password) {
       return fail(400, {

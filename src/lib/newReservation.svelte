@@ -21,8 +21,6 @@
   let formError = false;
 
   async function submitReservation() {
-    // console.log("Form submitted");
-    
     let RecurrenceEndDate, RecurrencePattern;
     const startTime = dayjs(date)
       .tz(timeZone)
@@ -37,12 +35,24 @@
 
     if (recur) {
       RecurrencePattern = recur == "Weekly" ? dayjs(startTime).format("dddd") : "Daily";
-      RecurrenceEndDate = dayjs(recurEndDate).tz(timeZone).endOf("day").utc();
+      RecurrenceEndDate = dayjs(recurEndDate).tz(timeZone).endOf("day").utc().toISOString();
     }
+
+    const data = {
+      roomId: Number(roomId),
+      userId: Number(user.id),
+      startTime,
+      endTime,
+      eventTitle,
+      eventDetails,
+      RecurrencePattern,
+      RecurrenceEndDate,
+    };
 
     const response = await fetch("/api/newReservation", {
       method: "POST",
-      body: JSON.stringify({ roomId, userId: user.id, startTime, endTime, eventTitle, eventDetails, RecurrencePattern, RecurrenceEndDate }),
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(data),
     });
     const { error } = await response.json();
 

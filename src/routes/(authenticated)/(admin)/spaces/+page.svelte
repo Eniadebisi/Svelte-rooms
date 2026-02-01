@@ -11,9 +11,23 @@
   let editLoc = 1;
   $: filteredRooms = data.rooms.filter((room) => room.locationId == parseInt(editLoc));
 
-  async function updateEditLoc() {
-    // filteredRooms = await data.rooms.filter((room) => room.location === parseInt(editLoc));
-    // filteredRooms = filteredRooms
+  async function deleteRoom(roomId) {
+    const confirmDelete = confirm("Are you sure you want to delete this room?");
+    if (confirmDelete) {
+      const response = await fetch(`/api/deleteRoom`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ roomId }),
+      });
+
+      if (response) {
+        location.reload();
+      } else {
+        alert("Failed to delete the room.");
+      }
+    }
   }
 </script>
 
@@ -31,7 +45,7 @@
           <th>{`${location.name} (${location.visibility ? "Hidden" : "Visible"})`}</th>
           {#each data.rooms.filter((room) => room.locationId === location.id) as room}
             <div class="d-flex flex-column">
-              <td> {room.name} - {room.size} ppl - {room.details} </td>
+              <td> {room.name} - {room.size} ppl - {room.details} {room.id} <button on:click={deleteRoom(room.id)}>Delete</button> </td>
             </div>
           {/each}
         </tr>
@@ -48,7 +62,7 @@
         <form class="m-2" method="POST" action="?/editRoom" use:enhance>
           <div>
             <label for="EditRoomLocation">Location:</label>
-            <select name="EditRoomLocation" id="EditRoomLocation" on:change={updateEditLoc} bind:value={editLoc}>
+            <select name="EditRoomLocation" id="EditRoomLocation" bind:value={editLoc}>
               <option disabled> Select one...</option>
               {#each data.locations as loc}
                 <option value={loc.id}>{loc.name}</option>
@@ -127,7 +141,7 @@
               <option value="1">Hidden</option>
             </select>
           </div>
-          
+
           {#if form?.error && form.form == "editLocation"}
             <div class="notice error m-2">
               {form.error}

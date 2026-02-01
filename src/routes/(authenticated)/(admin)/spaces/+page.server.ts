@@ -25,10 +25,7 @@ export const load = (async ({locals}) => {
 export const actions: Actions = {
   addRoom: async ({ cookies, request }) => {
     const data = Object.fromEntries(await request.formData());
-    const roomName = data.roomName;
-    const size = data.size;
-    const locId = data.locId;
-    const details = data.details;
+    const {roomName, size, locId, details} = data;
     if (!roomName || !size || !locId || !details) {
       return fail(401, {
         error: "Missing one or more details",

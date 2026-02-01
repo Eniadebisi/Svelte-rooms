@@ -37,7 +37,7 @@
     //   body: JSON.stringify({ reservationId, roomId, userId: user.id, startTime, endTime, eventTitle, eventDetails }),
     // });
     // const { error } = await response.json();
-    const error = "This feature is disabled"
+    const error = "This feature is disabled, please delete the reservation and recreate it.";
     if (error) {
       formError = error;
     } else {

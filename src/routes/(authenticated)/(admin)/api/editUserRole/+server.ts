@@ -1,9 +1,9 @@
 import { resetPW, setUserRole } from "$lib/server/user.model.js";
 import { json } from "@sveltejs/kit";
 import nodemailer from "nodemailer";
-import { EMAIL_PASSWORD } from "$env/static/private";
+import { EMAIL_PASSWORD } from "$lib/server/settings";
 import dayjs from "dayjs";
-import { PUBLIC_CONTACT_EMAIL, PUBLIC_SITE_NAME } from '$env/static/public';
+import { PUBLIC_CONTACT_EMAIL, PUBLIC_SITE_NAME } from "$lib/server/settings";
 
 const transporter = nodemailer.createTransport({
   host: "smtp.titan.email",
@@ -31,7 +31,6 @@ export async function POST({ request }) {
       break;
     case "resetPW":
       if (userId && selFunction && email) {
-        return json({ error: "Not setup" }, { status: 400 });
         const newTempPassword = Math.random().toString(36).slice(2);
         const deadline = new Date();
         deadline.setDate(deadline.getDate() + 7);
@@ -46,6 +45,7 @@ export async function POST({ request }) {
           html: "<div style='text-align: center;'> <h1> " + PUBLIC_SITE_NAME + "Reset</h1> <p>Hello, " + userName + "This will be your new temporary password: '" + newTempPassword + "'</p>  <p>You will have until " + dayjs(deadline).format() + " to reset your password from now.</p></div>",
         });
         console.log("Message sent " + info.messageId);
+        return json({ error: "Not setup" }, { status: 400 });
       }
 
       return json({ error: false }, { status: 201 });

@@ -34,9 +34,7 @@
         openReservationEdit(resvObj);
       },
       refresh: (rDate: string) => {
-        if (browser) {
-          window.location.href = "/reservations";
-        }
+        window.location.reload()
         closeModal();
       },
       notify: (mode: string, message: string) => {
@@ -113,7 +111,7 @@
   </div>
 
   <div class="w-100">
-    <div class="d-flex overflow-x-hidden mt-3">
+    <div class="d-flex overflow-x-hidden mt-3 border border-2 border-dark">
       <div class="rowStart">
         <div class="lCell Locations">Locations</div>
         {#each data.locations as loc}

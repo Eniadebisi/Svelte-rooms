@@ -10,7 +10,11 @@ dayjs.extend(timezone);
 export async function getReservations(start, end) {
   let reservations = await prisma.reservation.findMany({
     where: {
-      OR: [{ startTime: { gte: start, lte: end } }, { startTime: { lt: start }, RecurrencePattern: dayjs(start).format("dddd"), RecurrenceEndDate: { gte: end } }, { startTime: { lt: start }, RecurrencePattern: "Daily", RecurrenceEndDate: { gte: end } }],
+      OR: [
+        { startTime: { lt: end }, endTime: { gt: start } },
+        { startTime: { lt: start }, RecurrencePattern: dayjs(start).format("dddd"), RecurrenceEndDate: { gte: start } },
+        { startTime: { lt: start }, RecurrencePattern: "Daily", RecurrenceEndDate: { gte: start } },
+      ],
     },
     include: {
       user: {
@@ -98,6 +102,16 @@ export async function editRoom(roomId, uname, usize, ulocationId, udetails) {
     return { error: e.message };
   }
 }
+export async function deleteRoom(roomId) {
+  try {
+    await prisma.room.delete({
+      where: { id: roomId },
+    });
+    return { error: false };
+  } catch (e) {
+    return { error: e.message };
+  }
+}
 export async function editLocation(locationId, name, visibility) {
   try {
     await prisma.$transaction([
@@ -119,7 +133,8 @@ export async function editLocation(locationId, name, visibility) {
 
 export async function reserveRoom(roomId, userId, startTime, endTime, title, details, RecurrencePattern, RecurrenceEndDate) {
   try {
-    if (await checkAvailability(roomId, startTime, endTime)) {
+    const availability = await checkAvailability(roomId, startTime, endTime);
+    if (availability.error === false) {
       await prisma.reservation.create({
         data: {
           roomId,
@@ -152,8 +167,8 @@ export async function checkAvailability(roomId, start, end) {
         roomId,
         OR: [
           { startTime: { lt: end }, endTime: { gt: start } },
-          { startTime: { lt: start }, RecurrencePattern: dayjs(start).format("dddd"), RecurrenceEndDate: { gte: end } },
-          { startTime: { lt: start }, RecurrencePattern: "Daily", RecurrenceEndDate: { gte: end } },
+          { startTime: { lt: start }, RecurrencePattern: dayjs(start).format("dddd"), RecurrenceEndDate: { gte: start } },
+          { startTime: { lt: start }, RecurrencePattern: "Daily", RecurrenceEndDate: { gte: start } },
         ],
       },
     });

@@ -21,4 +21,5 @@ declare global {
     user: { name: string; role: Roles };
     Room: Pick<Room, "id" | "name" | "size" | "locationId" | "details">;
   };
+  declare module prisma;
 }

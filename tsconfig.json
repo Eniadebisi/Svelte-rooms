@@ -31,18 +31,6 @@
     "module": "ES2015" /* Specify what module code is generated. */,
     "rootDir": "./" /* Specify the root folder within your source files. */,
     "moduleResolution": "node10" /* Specify how TypeScript looks up a file from a given module specifier. */,
-    // "baseUrl": "." /* Specify the base directory to resolve non-relative module names. */,
-    "paths": {
-      "$lib": ["./src/lib"],
-      "$lib/*": ["./src/lib/*"],
-      "$src": ["./src"],
-      "$static": ["./static/"],
-      "$src/*": ["./src/*"],
-      "$db": ["./src/lib/server/db.js"],
-      // "$logs": ["./logs"],
-      "$styles": ["./src/scss/*"],
-      "$modals": ["./src/lib/modals"]
-    } /* Specify a set of entries that re-map imports to additional lookup locations. */,
     // "rootDirs": [],                                   /* Allow multiple folders to be treated as one when resolving modules. */
     // "typeRoots": [],                                  /* Specify multiple folders that act like './node_modules/@types'. */
     // "types": [],                                      /* Specify type package names to be included without being referenced in a source file. */
@@ -119,5 +107,5 @@
     // "skipDefaultLibCheck": true,                      /* Skip type checking .d.ts files that are included with TypeScript. */
     "skipLibCheck": true /* Skip type checking all .d.ts files. */
   },
-  "include": ["src", "src/lib/settings.tss.ts"]
+  "include": ["types/**/*.d.ts", "prisma.config.ts", "src", "src/lib/settings.tss.ts"]
 }
