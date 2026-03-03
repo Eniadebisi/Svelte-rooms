@@ -174,7 +174,7 @@ export async function checkAvailability(roomId, start, end) {
     });
 
     const startHHMM = dayjs(start).hour() + dayjs(start).minute() / 60;
-    const endHHMM = dayjs(end).hour() + dayjs(end).minute() / 60;
+    const endHHMM = dayjs(end).hour() + 24*(dayjs(end).hour() == 0 ? 1 : 0) + dayjs(end).minute() / 60;
 
     for (const resv of overlapping) {
       const resvStartHHMM = dayjs(resv.startTime).hour() + dayjs(resv.startTime).minute() / 60;
