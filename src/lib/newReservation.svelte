@@ -96,7 +96,7 @@
             {/each}
           </select>
           ➡️
-          <select name="startTime" id="startTime" bind:value={eTime}>
+          <select name="endTime" id="endTime" bind:value={eTime}>
             {#each Array(37) as _, i}
               <option value={(Math.floor(i / 2) + 6) * 100 + (i % 2) * 30}>{(Math.floor(i / 2) + 6) * 100 + (i % 2) * 30}</option>
             {/each}

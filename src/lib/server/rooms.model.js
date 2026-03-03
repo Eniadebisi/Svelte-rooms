@@ -147,7 +147,6 @@ export async function reserveRoom(roomId, userId, startTime, endTime, title, det
           RecurrenceEndDate,
         },
       });
-      // console.log(roomId, userId, startTime, endTime, title, details);
 
       return { error: false };
     } else {
@@ -160,8 +159,6 @@ export async function reserveRoom(roomId, userId, startTime, endTime, title, det
 
 export async function checkAvailability(roomId, start, end) {
   try {
-    // console.log("Check availability " + dayjs(start).toISOString() + "-" + dayjs(end).toISOString());
-
     const overlapping = await prisma.reservation.findMany({
       where: {
         roomId,
