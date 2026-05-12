@@ -1,6 +1,6 @@
 generator client {
-  provider = "prisma-client"
-  output   = "./generated"
+  provider   = "prisma-client"
+  output     = "./generated"
   engineType = "client"
 }
 
@@ -9,18 +9,19 @@ datasource db {
 }
 
 model User {
-  id          Int           @id @default(autoincrement())
-  email       String        @unique
-  password    String
-  name        String
-  role        Roles         @default(Restricted)
-  roleTemp    Int           @default(0)
-  Reservation Reservation[]
+  id             Int           @id @default(autoincrement())
+  email          String        @unique
+  password       String
+  name           String
+  role           Roles         @default(Restricted)
+  roleTemp       Int           @default(0)
+  generatedPW    Boolean       @default(false)
+  resetPWExpires DateTime?
+  Reservation    Reservation[]
 }
 
 model Team {
   name String
-  
   id   Int    @id @default(autoincrement())
 }
 
@@ -56,8 +57,8 @@ model Reservation {
 model Location {
   id         Int    @id @default(autoincrement())
   name       String @unique @db.VarChar(50)
+  visibility Int    @default(0)
   rooms      Room[]
-  visibility Int    @default(0) // 0 = public, 1 = private
 }
 
 enum Roles {

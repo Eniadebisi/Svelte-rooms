@@ -30,6 +30,7 @@ export const handle = async ({ event, resolve }) => {
             email: user.email,
             role: user.role,
             name: user.name,
+            generatedPW: user.generatedPW,
           };
 
           locals.user = sessionUser;
@@ -44,6 +45,7 @@ export const handle = async ({ event, resolve }) => {
         email: "dev@gmail.com",
         role: "Owner",
         name: "Development",
+        generatedPW: false,
       };
 
       locals.user = sessionUser;

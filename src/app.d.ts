@@ -11,6 +11,7 @@ declare global {
         id: number;
         email: string;
         role: Roles;
+        generatedPW: boolean;
       };
     }
     // interface PageData {}
@@ -21,5 +22,4 @@ declare global {
     user: { name: string; role: Roles };
     Room: Pick<Room, "id" | "name" | "size" | "locationId" | "details">;
   };
-  declare module prisma;
 }
