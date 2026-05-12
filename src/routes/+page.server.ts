@@ -2,7 +2,7 @@ import { checkSignIn } from "$lib/server/user.model";
 import type { PageServerLoad } from "./$types";
 import type { Actions } from "./$types";
 import { fail, redirect } from "@sveltejs/kit";
-import { PUBLIC_SITE_NAME } from "$lib/server/settings.ts";
+import { PUBLIC_SITE_NAME } from "$env/static/public";
 
 export async function load({ locals }) {
   if (locals.user) redirect(302, "/reservations");

@@ -1,5 +1,5 @@
 import { getLocations, getReservations, getRooms } from "$lib/server/rooms.model";
-import { timeZone } from "$lib/settings";
+import { timeZone } from "$lib/server/settings";
 
 import dayjs from "dayjs";
 import timezone from "dayjs/plugin/timezone";
@@ -30,5 +30,5 @@ export async function load({ parent, url }) {
   const { reservations, error: reservError } = await getReservations(start, end);
   if (reservError || !reservations) throw new Error();
 
-  return { user, rooms, locations, reservations, date };
+  return { user, rooms, locations, reservations, date, timeZone };
 }

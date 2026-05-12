@@ -6,10 +6,9 @@
   dayjs.extend(utc);
   import timezone from "dayjs/plugin/timezone";
   dayjs.extend(timezone);
-  import { timeZone } from "$lib/settings";
   import { hasPermission, type User } from "./permissions/auth";
 
-  export let isOpen, rooms, user: User, refresh: Function;
+  export let isOpen, rooms, user: User, refresh: Function, timeZone: string;
   let date = dayjs(new Date()).format("YYYY-MM-DD");
   let roomId: number,
     recurEndDate: Date,

@@ -1,10 +1,9 @@
 <script lang="ts">
   import { hasPermission } from "$lib/permissions/auth";
-  import { Logo } from "$lib/settings";
   import type { LayoutData } from "./$types";
 
   export let data: LayoutData;
-  let { user } = data;
+  let { user, Logo } = data;
 </script>
 
 <div class="navbar bg-body-tertiary p-3">

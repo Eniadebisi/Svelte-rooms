@@ -5,7 +5,6 @@
   import dayjs from "dayjs";
   import ReservationDetails from "$lib/ReservationDetails.svelte";
   import ReservationEdit from "$lib/ReservationEdit.svelte";
-  import { timeZone } from "$lib/settings";
   import NewReservation from "$lib/newReservation.svelte";
   import { acts, Notifications } from "@tadashi/svelte-notification";
   
@@ -52,6 +51,7 @@
         }
         closeModal();
       },
+      timeZone: data.timeZone
     });
   }
   function newReservation() {
@@ -64,6 +64,7 @@
         }
         closeModal();
       },
+      timeZone: data.timeZone
     });
   }
 </script>

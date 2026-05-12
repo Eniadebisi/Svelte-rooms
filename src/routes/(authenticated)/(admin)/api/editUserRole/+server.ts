@@ -1,9 +1,9 @@
 import { resetPW, setUserRole } from "$lib/server/user.model.js";
 import { json } from "@sveltejs/kit";
 import nodemailer from "nodemailer";
-import { EMAIL_PASSWORD } from "$lib/server/settings";
+import { SUPP_EMAIL, SUPP_EMAIL_PW } from "$env/static/private";
 import dayjs from "dayjs";
-import { PUBLIC_CONTACT_EMAIL, PUBLIC_SITE_NAME } from "$lib/server/settings";
+import { PUBLIC_CONTACT_EMAIL, PUBLIC_SITE_NAME } from "$env/static/public";
 
 const transporter = nodemailer.createTransport({
   host: "smtp.titan.email",
