@@ -6,12 +6,13 @@ import dayjs from "dayjs";
 import { PUBLIC_CONTACT_EMAIL, PUBLIC_SITE_NAME } from "$env/static/public";
 
 const transporter = nodemailer.createTransport({
-  host: "smtp.titan.email",
-  port: 465,
-  secure: true,
+  host: "smtp.office365.com",
+  port: 587,
+  secure: false,
+  requireTLS: true,
   auth: {
-    user: PUBLIC_CONTACT_EMAIL,
-    pass: EMAIL_PASSWORD,
+    user: SUPP_EMAIL,
+    pass: SUPP_EMAIL_PW,
   },
 });
 
@@ -40,15 +41,13 @@ export async function POST({ request }) {
         }
         const info = await transporter.sendMail({
           from: "Support <" + PUBLIC_CONTACT_EMAIL + ">",
-          to: "eniadebisi@gmail.com",
+          to: email,
           subject: "Room reservation password reset",
-          html: "<div style='text-align: center;'> <h1> " + PUBLIC_SITE_NAME + "Reset</h1> <p>Hello, " + userName + "This will be your new temporary password: '" + newTempPassword + "'</p>  <p>You will have until " + dayjs(deadline).format() + " to reset your password from now.</p></div>",
+          html: "<div style='text-align: center;'> <h1> " + PUBLIC_SITE_NAME + " Reset</h1> <p>Hello, " + userName + ". This will be your new temporary password: \"" + newTempPassword + "\"</p>  <p>You will have until " + dayjs(deadline).format('DD/MM/YYYY HH:mm') + " to reset your password from now.</p></div>",
         });
-        console.log("Message sent " + info.messageId);
-        return json({ error: "Not setup" }, { status: 400 });
+        // console.log("Message sent " + info.messageId);
+        return json({ error: false }, { status: 201 });
       }
-
-      return json({ error: false }, { status: 201 });
 
     default:
       break;
