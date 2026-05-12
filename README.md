@@ -12,7 +12,6 @@
 - [Architecture](#architecture)
 - [Database](#database)
 - [Development Commands](#development-commands)
-- [Maintenance Notes](#maintenance-notes)
 - [License](#license)
 
 ## Tech Stack
@@ -51,27 +50,6 @@ cd S-rooms
 npm install
 ```
 
-### Environment Configuration
-
-Create `.env` in project root:
-
-```env
-# Database credentials
-DB_HOST=localhost
-DB_PORT=3306
-DB_USER=root
-DB_PASSWORD=password
-DB_NAME=rooms_db
-
-# Environment
-MODE=development
-```
-
-**Notes:**
-- Passwords with special characters should be wrapped in quotes: `DB_PASSWORD='#special@chars'`
-- For shared hosting with connection limits, set `connectionLimit: 1` in [src/lib/server/db.ts](src/lib/server/db.ts)
-- Shared hosting typically limits 500 connections/hour; connection limit resets hourly
-
 ## Project Structure
 
 ```
@@ -92,22 +70,22 @@ src/
 │   └── +page.svelte                # Landing/home page
 ├── lib/
 │   ├── server/
-│   │   ├── db.ts                   # **Prisma Client singleton** - Sets adapter, connection pooling
+│   │   ├── db.ts                   # Prisma Client singleton - Sets adapter, connection pooling
 │   │   ├── user.model.js           # User database queries
-│   │   ├── rooms.model.js          # Room database queries
+│   │   └── rooms.model.js          # Room database queries
 │   ├── permissions/
-│   │   ├── auth.ts                 # **Role-based authorization** - hasPermission() checks
+│   │   ├── auth.ts                 # Role-based authorization - hasPermission() checks
 │   │   └── hasPermissions.test.ts  # Permission tests
 │   ├── settings.ts                 # App config constants
-│   ├── emails.ts                   # Email template functions
+│   └── emails.ts                   # Email template functions
 ├── scss/
 │   └── styles.scss                 # Global SCSS styles
 ├── auth.js                         # Authentication middleware
 ├── hooks.server.ts                 # SvelteKit hooks
 └── app.d.ts                        # Type definitions
 prisma/
-├── schema.prisma                   # **Database schema** - All models defined here
-├── config.ts                       # **Prisma 7 config** - Datasource & settings
+├── schema.prisma                   # Database schema - All models defined here
+├── config.ts                       # Prisma 7 config - Datasource & settings
 ├── generated/                      # Auto-generated Prisma Client (do not commit)
 └── migrations/                     # Database migration history
 ```
@@ -184,35 +162,6 @@ npx prisma migrate status    # Check migration status
 npx prisma studio           # Open visual database browser
 npx prisma migrate reset    # Reset database (dev only!)
 ```
-
-## Maintenance Notes
-
-### Prisma 7 Migration
-- **Config-based datasources:** URLs go in `prisma.config.ts`, not `schema.prisma`
-- **ESM Client:** Significantly reduces bundle size (~90% smaller)
-- **Output path:** Generated client goes to `prisma/generated/`
-- **Import:** Use `import { PrismaClient } from '../../prisma/generated/client'`
-
-### Database Considerations
-- **Shared Hosting:** Connection pool set to 1; hourly reset of connection quota
-- **Special Characters:** Password with special chars must be quoted in `.env`
-- **Migrations:** Only commit `.sql` files in `prisma/migrations/`, never commit `generated/`
-
-### Code Quality
-- Run `npm run check` before committing to catch type errors
-- All database access should use model files in `src/lib/server/`
-- Add tests in `.test.ts` files (e.g., `hasPermissions.test.ts`)
-- Keep `.env.example` updated when adding new environment variables
-
-### Common Issues & Solutions
-
-| Issue | Solution |
-|-------|----------|
-| "Connection pool timeout" | Reduce `connectionLimit` in [src/lib/server/db.ts](src/lib/server/db.ts) |
-| "max_connections_per_hour exceeded" | Shared hosting limit reached; resets hourly |
-| Prisma Client not found | Run `npm install` to regenerate client |
-| Sass deprecation warning | Already fixed in [vite.config.ts](vite.config.ts) with `api: 'modern'` |
-| Database won't connect | Check `.env` file exists with correct DB_HOST, DB_PORT, DB_USER, DB_PASSWORD, DB_NAME |
 
 ## License
 

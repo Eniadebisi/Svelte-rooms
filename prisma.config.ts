@@ -1,4 +1,5 @@
 import "dotenv/config";
+import type { PrismaConfig } from "prisma/config";
 import { defineConfig, env } from "prisma/config";
 
 export default defineConfig({
@@ -6,4 +7,4 @@ export default defineConfig({
   datasource: {
     url: env("DATABASE_URL"), 
   },
-});
+}) satisfies PrismaConfig;
