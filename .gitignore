@@ -6,7 +6,6 @@ node_modules
 .terraform/
 terraform.tfstate*
 
-
 # Output
 .output
 .vercel
@@ -26,3 +25,7 @@ Thumbs.db
 # Vite
 vite.config.js.timestamp-*
 vite.config.ts.timestamp-*
+prisma/generated
+.env*.local
+.claude
+src/lib/assets/Logo.png
