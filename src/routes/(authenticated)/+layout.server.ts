@@ -1,5 +1,5 @@
 import { error, redirect } from "@sveltejs/kit";
-import { Logo } from "$lib/server/settings";
+import { Logo } from "$lib/assets/Logo.png";
 
 export async function load({ locals, url }) {
   const user = locals.user;

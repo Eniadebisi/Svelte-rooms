@@ -4,7 +4,7 @@
   import { goto } from "$app/navigation";
 
   export let data: PageData;
-  const { PUBLIC_SITE_NAME } = data;
+  const { SITE_NAME } = data;
   let showPW = false;
   function togglePW() {
     showPW = !showPW;
@@ -13,7 +13,7 @@
 </script>
 
 <div class="fullHeight d-flex align-items-center flex-column justify-content-center row-gap">
-  <h1 class="text-center display-1">{PUBLIC_SITE_NAME}</h1>
+  <h1 class="text-center display-1">{SITE_NAME}</h1>
 
   <form class="container-sm text-center" action="?/signIn" use:enhance method="POST">
     <div class="input-group mb-3 align-middle">
