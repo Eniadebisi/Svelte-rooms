@@ -12,12 +12,11 @@ terraform {
   }
 
   backend "s3" {
-    organization = tech_Consulting
-  #   bucket         = "mybucket"
-  #   key            = "path/to/key"
+    bucket         = "svelte-rooms-tf-state"
+    key            = "svelte-rooms/terraform.tfstate"
      region         = "us-east-1"  
-  #   dynamodb_table = "terraform-state-lock"
-  #   encrypt        = true
+    dynamodb_table = "svelte-tf-state-lock"
+    encrypt        = true
   }
 }
 
