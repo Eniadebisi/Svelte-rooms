@@ -1,6 +1,11 @@
 node_modules
 .vscode/settings.json
 
+# Terraform
+*.tfvars
+.terraform/
+terraform.tfstate*
+
 # Output
 .output
 .vercel
