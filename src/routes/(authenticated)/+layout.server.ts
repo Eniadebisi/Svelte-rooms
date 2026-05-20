@@ -1,9 +1,7 @@
 import { error, redirect } from "@sveltejs/kit";
-import { Logo } from "$lib/assets/Logo.png";
 
 export async function load({ locals, url }) {
   const user = locals.user;
-  
 
   if (!user) throw error(400, { message: "Restricted" });
 
@@ -11,5 +9,5 @@ export async function load({ locals, url }) {
     throw redirect(302, "/profile");
   }
 
-  return { user, Logo };
+  return { user };
 }

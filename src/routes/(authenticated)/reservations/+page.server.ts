@@ -1,5 +1,5 @@
 import { getLocations, getReservations, getRooms } from "$lib/server/rooms.model";
-import { timeZone } from "$lib/server/settings";
+import { TIME_ZONE } from "$env/static/private";
 
 import dayjs from "dayjs";
 import timezone from "dayjs/plugin/timezone";
@@ -13,11 +13,11 @@ export async function load({ parent, url }) {
   if (sDate != null) {
     date = new Date(sDate)
     
-    start = dayjs(date).tz(timeZone).startOf("day").utc();
-    end = dayjs(date).tz(timeZone).endOf("day").utc();
+    start = dayjs(date).tz(TIME_ZONE).startOf("day").utc();
+    end = dayjs(date).tz(TIME_ZONE).endOf("day").utc();
   } else {
-    start = dayjs(date).tz(timeZone).startOf("day").utc();
-    end = dayjs(date).tz(timeZone).endOf("day").utc();
+    start = dayjs(date).tz(TIME_ZONE).startOf("day").utc();
+    end = dayjs(date).tz(TIME_ZONE).endOf("day").utc();
   }
   
   let { rooms, error: roomError } = await getRooms();
@@ -30,5 +30,5 @@ export async function load({ parent, url }) {
   const { reservations, error: reservError } = await getReservations(start, end);
   if (reservError || !reservations) throw new Error();
 
-  return { user, rooms, locations, reservations, date, timeZone };
+  return { user, rooms, locations, reservations, date, TIME_ZONE };
 }

@@ -1,5 +1,4 @@
 import { prisma } from "./db";
-import { timeZone } from "./settings";
 
 import dayjs from "dayjs";
 import utc from "dayjs/plugin/utc";
