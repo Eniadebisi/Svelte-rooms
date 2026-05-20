@@ -1,0 +1,1 @@
+{"ID":"d5253b78-2079-559d-079a-79198c0efe77","Operation":"OperationTypePlan","Info":"","Who":"jinho@TC-ADEBSI","Version":"1.15.3","Created":"2026-05-18T15:47:49.731383759Z","Path":"svelte-rooms-tf-state/svelte-rooms/terraform.tfstate"}

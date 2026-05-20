@@ -13,9 +13,10 @@ terraform {
 
   backend "s3" {
     bucket         = "svelte-rooms-tf-state"
-    key            = "svelte-rooms/terraform.tfstate"
-     region         = "us-east-1"  
-    dynamodb_table = "svelte-tf-state-lock"
+    key            = "svelte-rooms/terraform.tfstate-v2"
+    region         = "us-east-1"  
+    #dynamodb_table = "svelte-tf-state-lock"
+    use_lockfile   = "false"
     encrypt        = true
   }
 }
