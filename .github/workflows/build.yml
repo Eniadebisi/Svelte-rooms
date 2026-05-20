@@ -49,7 +49,9 @@ jobs:
           TAG:      ${{ steps.meta.outputs.tag }}
           ENV:      ${{ steps.meta.outputs.env }}
         run: |
-          docker build -t $REPO:$TAG -t $REPO:${ENV}-latest .
+          echo "TAG=$TAG"
+          echo "ENV=$ENV"
+          docker build -t $REPO:$TAG -t $REPO:$ENV-latest .
           docker push $REPO:$TAG
-          docker push $REPO:${ENV}-latest
+          docker push $REPO:$ENV-latest
           echo "Built and pushed $REPO:$TAG"
