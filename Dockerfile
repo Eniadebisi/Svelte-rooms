@@ -1,17 +1,22 @@
 FROM node:20-alpine AS builder
 WORKDIR /app
 COPY package*.json ./
+COPY prisma ./prisma/
 RUN npm ci
+RUN npx prisma generate
 COPY . .
 RUN npm run build
 
 FROM node:20-alpine AS runtime
 WORKDIR /app
-RUN npm install -g serve
 COPY --from=builder /app/build ./build
+COPY --from=builder /app/node_modules ./node_modules
+COPY --from=builder /app/package.json ./package.json
 
-EXPOSE 8080
+ENV NODE_ENV=production
+EXPOSE 3000
+
 HEALTHCHECK --interval=30s --timeout=5s --retries=3 \
-  CMD wget -qO- http://localhost:8080 || exit 1
+  CMD wget -qO- http://localhost:3000 || exit 1
 
-CMD ["serve", "-s", "build", "-l", "8080"]
+CMD ["node", "build/index.js"]
