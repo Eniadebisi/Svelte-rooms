@@ -12,12 +12,12 @@ terraform {
   }
 
   backend "s3" {
-    bucket         = "svelte-rooms-tf-state"
-    key            = "svelte-rooms/terraform.tfstate-v2"
-    region         = "us-east-1"  
+    bucket = "svelte-rooms-tf-state"
+    key    = "svelte-rooms/terraform.tfstate-v2"
+    region = "us-east-1"
     #dynamodb_table = "svelte-tf-state-lock"
-    use_lockfile   = "false"
-    encrypt        = true
+    use_lockfile = "false"
+    encrypt      = true
   }
 }
 
@@ -80,7 +80,7 @@ variable "task_cpu" {
 }
 
 variable "task_memory" {
-  type        = map(number)
+  type = map(number)
   default = {
     dev  = 512
     qa   = 512
@@ -90,7 +90,7 @@ variable "task_memory" {
 }
 
 variable "desired_count" {
-  type        = map(number)
+  type = map(number)
   default = {
     dev  = 1
     qa   = 1
@@ -100,7 +100,7 @@ variable "desired_count" {
 }
 
 variable "log_retention_days" {
-  type        = map(number)
+  type = map(number)
   default = {
     dev  = 7
     qa   = 14
@@ -408,9 +408,9 @@ resource "aws_iam_role_policy" "github_actions" {
     Version = "2012-10-17"
     Statement = [
       {
-        Sid    = "ECRAuth"
-        Effect = "Allow"
-        Action = ["ecr:GetAuthorizationToken"]
+        Sid      = "ECRAuth"
+        Effect   = "Allow"
+        Action   = ["ecr:GetAuthorizationToken"]
         Resource = "*"
       },
       {
