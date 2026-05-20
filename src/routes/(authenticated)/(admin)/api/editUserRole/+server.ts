@@ -1,17 +1,17 @@
 import { resetPW, setUserRole } from "$lib/server/user.model.js";
 import { json } from "@sveltejs/kit";
 import nodemailer from "nodemailer";
-import { EMAIL_PASSWORD } from "$env/static/private";
+import { AUTH_EMAIL, AUTH_EMAIL_PW, CONTACT_EMAIL, SITE_NAME, SMTP_HOST, SMTP_PORT } from "$env/static/private";
 import dayjs from "dayjs";
-import { CONTACT_EMAIL, SITE_NAME } from "../../../../../../settings.js";
 
 const transporter = nodemailer.createTransport({
-  host: "smtp.titan.email",
-  port: 465,
-  secure: true,
+  host: SMTP_HOST,
+  port: SMTP_PORT,
+  secure: false,
+  requireTLS: true,
   auth: {
-    user: CONTACT_EMAIL,
-    pass: EMAIL_PASSWORD,
+    user: AUTH_EMAIL,
+    pass: AUTH_EMAIL_PW,
   },
 });
 
@@ -31,7 +31,6 @@ export async function POST({ request }) {
       break;
     case "resetPW":
       if (userId && selFunction && email) {
-        return json({ error: "Not setup" }, { status: 400 });
         const newTempPassword = Math.random().toString(36).slice(2);
         const deadline = new Date();
         deadline.setDate(deadline.getDate() + 7);
@@ -41,14 +40,13 @@ export async function POST({ request }) {
         }
         const info = await transporter.sendMail({
           from: "Support <" + CONTACT_EMAIL + ">",
-          to: "eniadebisi@gmail.com",
+          to: email,
           subject: "Room reservation password reset",
-          html: "<div style='text-align: center;'> <h1> " + SITE_NAME + "Reset</h1> <p>Hello, " + userName + "This will be your new temporary password: '" + newTempPassword + "'</p>  <p>You will have until " + dayjs(deadline).format() + " to reset your password from now.</p></div>",
+          html: "<div style='text-align: center;'> <h1> " + SITE_NAME + " Reset</h1> <p>Hello, " + userName + ". This will be your new temporary password: \"" + newTempPassword + "\"</p>  <p>You will have until " + dayjs(deadline).format('DD/MM/YYYY HH:mm') + " to reset your password from now.</p></div>",
         });
-        console.log("Message sent " + info.messageId);
+        // console.log("Message sent " + info.messageId);
+        return json({ error: false }, { status: 201 });
       }
-
-      return json({ error: false }, { status: 201 });
 
     default:
       break;

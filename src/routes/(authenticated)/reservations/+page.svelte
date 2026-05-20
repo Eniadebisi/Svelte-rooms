@@ -5,11 +5,9 @@
   import dayjs from "dayjs";
   import ReservationDetails from "$lib/ReservationDetails.svelte";
   import ReservationEdit from "$lib/ReservationEdit.svelte";
-  import { timeZone } from "$lib/settings";
   import NewReservation from "$lib/newReservation.svelte";
   import { acts, Notifications } from "@tadashi/svelte-notification";
-  import type { Reservation } from "@prisma/client";
-
+  
   export let data: PageData;
   let date = data.date ? data.date : new Date();
   let staticDate = dayjs(date).format("YYYY-MM-DD");
@@ -26,7 +24,7 @@
     const { reservations: resv, start, end } = await response.json();
     reservations = resv;
   }
-  function openResvervationDetails(resvObj: Reservation) {
+  function openResvervationDetails(resvObj: EnhancedReservation) {
     openModal(ReservationDetails, {
       resvObj,
       user: data.user,
@@ -35,9 +33,7 @@
         openReservationEdit(resvObj);
       },
       refresh: (rDate: string) => {
-        if (browser) {
-          window.location.href = "/reservations";
-        }
+        window.location.reload()
         closeModal();
       },
       notify: (mode: string, message: string) => {
@@ -45,7 +41,7 @@
       },
     });
   }
-  function openReservationEdit(resvObj: Reservation) {
+  function openReservationEdit(resvObj: EnhancedReservation) {
     openModal(ReservationEdit, {
       resvObj,
       rooms: data.rooms,
@@ -55,6 +51,7 @@
         }
         closeModal();
       },
+      timeZone: data.timeZone
     });
   }
   function newReservation() {
@@ -67,9 +64,9 @@
         }
         closeModal();
       },
+      timeZone: data.timeZone
     });
   }
-
 </script>
 
 <div class="px-4 py-1 mt-1 text-center d-flex flex-column align-items-center">
@@ -93,7 +90,7 @@
           id="date"
           bind:value={staticDate}
           on:change={() => {
-            date = dayjs(staticDate).toDate()
+            date = dayjs(staticDate).toDate();
             updateReserv(date);
           }}
         />
@@ -114,21 +111,21 @@
     </div>
   </div>
 
-  <div class="w-100">
+  <div class="w-100 align-content-center">
     <div class="d-flex overflow-x-hidden mt-3">
-      <div class="rowStart">
+      <div class="rowStart border-2 border-dark border-top border-bottom border-start">
         <div class="lCell Locations">Locations</div>
         {#each data.locations as loc}
           <div class="lCell locHeaderColor">{loc.name}</div>
 
           {#each data.rooms.filter((room) => room.locationId === loc.id) as room}
-            <div class="lCell roomHeaderColor">
+            <div class="lCell roomHeaderColor" title={room.details}>
               {room.name}
             </div>
           {/each}
         {/each}
       </div>
-      <div class="rowEnd overflow-x-scroll">
+      <div class="rowEnd overflow-x-scroll border-2 border-dark border-top border-bottom border-end">
         <div class="tableRow">
           {#each Array(18) as _, i}
             <div class="rCell time-header">{i + 6}:00</div>

@@ -6,11 +6,9 @@
   dayjs.extend(utc);
   import timezone from "dayjs/plugin/timezone";
   dayjs.extend(timezone);
-  import * as rrule from "rrule";
-  import { timeZone } from "./settings";
   import { hasPermission, type User } from "./permissions/auth";
 
-  export let isOpen, rooms, user: User, refresh: Function;
+  export let isOpen, rooms, user: User, refresh: Function, timeZone: string;
   let date = dayjs(new Date()).format("YYYY-MM-DD");
   let roomId: number,
     recurEndDate: Date,
@@ -36,12 +34,24 @@
 
     if (recur) {
       RecurrencePattern = recur == "Weekly" ? dayjs(startTime).format("dddd") : "Daily";
-      RecurrenceEndDate = dayjs(recurEndDate).tz(timeZone).endOf("day").utc();
+      RecurrenceEndDate = dayjs(recurEndDate).tz(timeZone).endOf("day").utc().toISOString();
     }
+
+    const data = {
+      roomId: Number(roomId),
+      userId: Number(user.id),
+      startTime,
+      endTime,
+      eventTitle,
+      eventDetails,
+      RecurrencePattern,
+      RecurrenceEndDate,
+    };
 
     const response = await fetch("/api/newReservation", {
       method: "POST",
-      body: JSON.stringify({ roomId, userId: user.id, startTime, endTime, eventTitle, eventDetails, RecurrencePattern, RecurrenceEndDate }),
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(data),
     });
     const { error } = await response.json();
 
@@ -85,7 +95,7 @@
             {/each}
           </select>
           ➡️
-          <select name="startTime" id="startTime" bind:value={eTime}>
+          <select name="endTime" id="endTime" bind:value={eTime}>
             {#each Array(37) as _, i}
               <option value={(Math.floor(i / 2) + 6) * 100 + (i % 2) * 30}>{(Math.floor(i / 2) + 6) * 100 + (i % 2) * 30}</option>
             {/each}

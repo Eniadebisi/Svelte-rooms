@@ -1,4 +1,4 @@
-import { JWT_ACCESS_SECRET } from "$env/static/private";
+import { JWT_ACCESS_SECRET, CONTACT_EMAIL } from "$env/static/private";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import { prisma } from "./db";
@@ -42,7 +42,7 @@ export async function checkSignIn(email, password) {
   if (!passwordIsValid) return { error: "Incorrect password" };
 
   // Check if user role is exist
-  if (user.role == "Restricted") return { error: "User restricted" };
+  if (user.role == "Restricted") return { error: "User restricted, please request access from admin. Contact email:" + CONTACT_EMAIL };
 
   const jwtUser = {
     id: user.id,

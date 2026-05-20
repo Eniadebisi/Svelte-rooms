@@ -2,19 +2,19 @@ import { checkSignIn } from "$lib/server/user.model";
 import type { PageServerLoad } from "./$types";
 import type { Actions } from "./$types";
 import { fail, redirect } from "@sveltejs/kit";
+import { SITE_NAME } from "$env/static/private";
 
 export async function load({ locals }) {
   if (locals.user) redirect(302, "/reservations");
 
-  return {};
+  return { SITE_NAME };
 }
 
 export const actions: Actions = {
   signIn: async ({ cookies, request }) => {
     const data = Object.fromEntries(await request.formData());
 
-    const email = data.email;
-    const password = data.password;
+    const {email, password} = data;
 
     if (!email || !password) {
       return fail(400, {

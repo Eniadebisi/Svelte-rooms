@@ -1,43 +1,45 @@
-r// import { checkSignIn } from "$lib/server/user.model";
-// import type { PageServerLoad } from "./$types";
-// import type { Actions } from "./$types";
-// import { error, fail, redirect } from "@sveltejs/kit";
+import { checkSignIn, updatePassword } from "$lib/server/user.model.js";
+import type { PageServerLoad, Actions } from "./$types";
+import { fail, redirect } from "@sveltejs/kit";
 
-// export async function load({}) {
-//   return {};
-// }
+export const load: PageServerLoad = async ({ locals }) => {
+  return { user: locals.user };
+};
 
-// export const actions: Actions = {
-//   updatePW: async ({ cookies, request, locals }) => {
-//     const data = Object.fromEntries(await request.formData());
-//     const user = locals.user;
+export const actions: Actions = {
+  updatePW: async ({ cookies, request, locals }) => {
+    const data = Object.fromEntries(await request.formData());
+    const user = locals.user;
 
-//     if (!user) {
-//       return fail(401, { error: "User object not received." });
-//     }
+    if (!user) {
+      return fail(401, { error: "Not authenticated." });
+    }
 
-//     const email = user.email;
-//     const password = data.password;
-//     const newPW = data.newPW;
-//     const CnfnewPW = data.CnfnewPW;
+    const currPW = data.currPW as string;
+    const newPW = data.newPW as string;
+    const CnfnewPW = data.CnfnewPW as string;
 
-//     if (!password || !newPW || !CnfnewPW) {
-//       return fail(401, { error: "Password is blank." });
-//     }
+    if (!currPW || !newPW || !CnfnewPW) {
+      return fail(400, { error: "All password fields are required." });
+    }
 
-//     if (newPW != CnfnewPW) {
-//       return fail(401, { error: "New passwords don't match." });
-//     }
+    if (newPW !== CnfnewPW) {
+      return fail(400, { error: "New passwords don't match." });
+    }
 
-//     const { error, token: __ } = await checkSignIn(email, password);
+    const { error } = await checkSignIn(user.email, currPW);
 
-//     if (error) {
-//       return fail(401, {
-//         error,
-//       });
-//     }
-//     cookies.delete("AuthorizationToken", { path: "/" });
+    if (error) {
+      return fail(401, { error: "Current password is incorrect." });
+    }
 
-//     throw redirect(302, "/");
-//   },
-// };
+    const { error: updateError } = await updatePassword(user.id, newPW);
+
+    if (updateError) {
+      return fail(500, { error: updateError });
+    }
+
+    cookies.delete("AuthorizationToken", { path: "/" });
+    throw redirect(302, "/");
+  },
+};

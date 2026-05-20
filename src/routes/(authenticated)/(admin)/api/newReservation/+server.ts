@@ -1,5 +1,4 @@
 import { checkAvailability, reserveRoom } from "$lib/server/rooms.model";
-import { timeZone } from "../../../../../../settings";
 import { json } from "@sveltejs/kit";
 import dayjs from "dayjs";
 
@@ -13,7 +12,7 @@ export async function POST({ request }) {
   if (end < start) {
     return json({ error: "End time must be after start time." }, { status: 400 });
   }
-  
+
   if (RecurrencePattern && !RecurrenceEndDate) {
     return json({ error: "If you include recurrence, please include end date." }, { status: 400 });
   }
@@ -23,8 +22,6 @@ export async function POST({ request }) {
   if (availabilityError) {
     return json({ error: availabilityError }, { status: 400 });
   }
-  // return json({ error: "Passed" }, { status: 400 });
-
 
   const { error } = await reserveRoom(roomId, userId, start, end, eventTitle, eventDetails, RecurrencePattern, RecurrenceEndDate);
   if (error) {

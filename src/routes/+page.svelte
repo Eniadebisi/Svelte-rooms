@@ -1,10 +1,10 @@
 <script lang="ts">
   import { enhance } from "$app/forms";
-  import { SITE_NAME } from "$lib/settings";
   import type { ActionData, PageData } from "./$types";
   import { goto } from "$app/navigation";
 
-  // export let data: PageData;
+  export let data: PageData;
+  const { SITE_NAME } = data;
   let showPW = false;
   function togglePW() {
     showPW = !showPW;
@@ -28,7 +28,7 @@
       <!-- svelte-ignore a11y-no-static-element-interactions -->
       <div class="input-group-text" id="basic-addon1" on:click={togglePW}><i class={"bi bi-eye" + (showPW ? "" : "-slash") + "-fill"}></i></div>
     </div>
-    
+
     {#if form?.error}
       <div class="notice error">
         {form.error}
@@ -36,8 +36,11 @@
     {/if}
 
     <button>Sign In</button>
-    <button type="button" on:click={() => {
-      goto("/register")
-    }}>Register</button>
+    <button
+      type="button"
+      on:click={() => {
+        goto("/register");
+      }}>Register</button
+    >
   </form>
 </div>
