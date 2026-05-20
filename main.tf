@@ -481,7 +481,7 @@ output "ecs_service_names" {
 }
 
 output "cloudwatch_log_groups" {
-  value       = { for env in var.environments : env => aws_cloudwatch_log_group.ecs[env].name }
+  value       = { for env in keys(aws_cloudwatch_log_group.ecs) : env => aws_cloudwatch_log_group.ecs[env].name }
   description = "CloudWatch log group names per environment"
 }
 
