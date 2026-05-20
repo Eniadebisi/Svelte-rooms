@@ -6,18 +6,17 @@ terraform {
   required_version = ">= 1.5.0"
   required_providers {
     aws = {
-      source  = "aws"
+      source  = "hashicorp/aws"
       version = "~> 5.0"
     }
   }
 
   backend "s3" {
-    bucket = "svelte-rooms-tf-state"
-    key    = "svelte-rooms/terraform.tfstate-v2"
-    region = "us-east-1"
-    #dynamodb_table = "svelte-tf-state-lock"
-    use_lockfile = "false"
-    encrypt      = true
+    bucket         = "svelte-rooms-tf-state"
+    key            = "svelte-rooms/terraform.tfstate-v2"
+    region         = "us-east-1"  
+    use_lockfile   = "false"
+    encrypt        = true
   }
 }
 
@@ -41,16 +40,6 @@ variable "project_name" {
   description = "Project name used as a prefix for all resources"
 }
 
-variable "github_username" {
-  type        = string
-  description = "GitHub username"
-}
-
-variable "github_repo" {
-  type        = string
-  description = "GitHub repo"
-}
-
 variable "environments" {
   type        = list(string)
   default     = ["dev", "qa", "prod"]
@@ -64,23 +53,23 @@ variable "app_name" {
 }
 
 variable "container_port" {
-  description = "Port the container listens on"
   type        = number
   default     = 8080
+  description = "Port the container listens on"
 }
 
 variable "task_cpu" {
-  description = "ECS task CPU units (256, 512, 1024, 2048, 4096)"
   type        = map(number)
   default = {
     dev  = 256
     qa   = 256
     prod = 512
   }
+  description = "ECS task CPU units (256, 512, 1024, 2048, 4096)"
 }
 
 variable "task_memory" {
-  type = map(number)
+  type        = map(number)
   default = {
     dev  = 512
     qa   = 512
@@ -90,7 +79,7 @@ variable "task_memory" {
 }
 
 variable "desired_count" {
-  type = map(number)
+  type        = map(number)
   default = {
     dev  = 1
     qa   = 1
@@ -100,7 +89,7 @@ variable "desired_count" {
 }
 
 variable "log_retention_days" {
-  type = map(number)
+  type        = map(number)
   default = {
     dev  = 7
     qa   = 14
@@ -130,6 +119,12 @@ data "aws_availability_zones" "available" {
 }
 
 data "aws_caller_identity" "current" {}
+
+# Look up the default ECS task execution role AWS creates automatically
+# Verify it exists first: aws iam get-role --role-name ecsTaskExecutionRole
+data "aws_iam_role" "ecs_task_execution" {
+  name = "ecsTaskExecutionRole"
+}
 
 # ============================================================
 # VPC & NETWORKING
@@ -222,7 +217,7 @@ resource "aws_security_group" "ecs_tasks" {
 }
 
 # ============================================================
-# ECR 
+# ECR
 # ============================================================
 
 resource "aws_ecr_repository" "app" {
@@ -256,7 +251,7 @@ resource "aws_ecr_lifecycle_policy" "app" {
       },
       {
         rulePriority = 2
-        description  = "Keep images"
+        description  = "Keep qa images"
         selection = {
           tagStatus     = "tagged"
           tagPrefixList = ["qa-"]
@@ -286,189 +281,6 @@ resource "aws_ecr_lifecycle_policy" "app" {
           countNumber = 7
         }
         action = { type = "expire" }
-      }
-    ]
-  })
-}
-
-# ============================================================
-# IAM 
-# ============================================================
-
-resource "aws_iam_role" "ecs_task_execution" {
-  name = "${var.project_name}-ecs-task-execution-role"
-
-  assume_role_policy = jsonencode({
-    Version = "2012-10-17"
-    Statement = [{
-      Effect    = "Allow"
-      Principal = { Service = "ecs-tasks.amazonaws.com" }
-      Action    = "sts:AssumeRole"
-    }]
-  })
-
-  tags = {
-    Project = var.project_name
-  }
-}
-
-resource "aws_iam_role_policy_attachment" "ecs_task_execution" {
-  role       = aws_iam_role.ecs_task_execution.name
-  policy_arn = "arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy"
-}
-
-# ============================================================
-# IAM - ECS Task Role (permissions FOR your app container)
-# ============================================================
-
-resource "aws_iam_role" "ecs_task" {
-  for_each = toset(var.environments)
-  name     = "${var.project_name}-${each.key}-ecs-task-role"
-
-  assume_role_policy = jsonencode({
-    Version = "2012-10-17"
-    Statement = [{
-      Effect    = "Allow"
-      Principal = { Service = "ecs-tasks.amazonaws.com" }
-      Action    = "sts:AssumeRole"
-    }]
-  })
-
-  tags = {
-    Project     = var.project_name
-    Environment = each.key
-  }
-}
-
-resource "aws_iam_role_policy" "ecs_task_logs" {
-  for_each = toset(var.environments)
-  name     = "CloudWatchLogsWrite"
-  role     = aws_iam_role.ecs_task[each.key].id
-
-  policy = jsonencode({
-    Version = "2012-10-17"
-    Statement = [{
-      Effect = "Allow"
-      Action = [
-        "logs:CreateLogStream",
-        "logs:PutLogEvents"
-      ]
-      Resource = "${aws_cloudwatch_log_group.ecs[each.key].arn}:*"
-    }]
-  })
-}
-
-# ============================================================
-# IAM - GitHub Actions Deployer Role
-# ============================================================
-
-resource "aws_iam_openid_connect_provider" "github" {
-  url             = "https://token.actions.githubusercontent.com"
-  client_id_list  = ["sts.amazonaws.com"]
-  thumbprint_list = ["6938fd4d98bab03faadb97b34396831e3780aea1"]
-
-  tags = {
-    Project = var.project_name
-  }
-}
-
-
-resource "aws_iam_role" "github_actions" {
-  name = "${var.project_name}-github-actions-role"
-
-  assume_role_policy = jsonencode({
-    Version = "2012-10-17"
-    Statement = [{
-      Effect = "Allow"
-      Principal = {
-        Federated = aws_iam_openid_connect_provider.github.arn
-      }
-      Action = "sts:AssumeRoleWithWebIdentity"
-      Condition = {
-        StringLike = {
-          "token.actions.githubusercontent.com:sub" = "repo:${var.github_username}/${var.github_repo}:*"
-        }
-        StringEquals = {
-          "token.actions.githubusercontent.com:aud" = "sts.amazonaws.com"
-        }
-      }
-    }]
-  })
-
-  tags = {
-    Project = var.project_name
-  }
-}
-
-resource "aws_iam_role_policy" "github_actions" {
-  name = "CICDDeployPolicy"
-  role = aws_iam_role.github_actions.id
-
-  policy = jsonencode({
-    Version = "2012-10-17"
-    Statement = [
-      {
-        Sid      = "ECRAuth"
-        Effect   = "Allow"
-        Action   = ["ecr:GetAuthorizationToken"]
-        Resource = "*"
-      },
-      {
-        Sid    = "ECRPushPull"
-        Effect = "Allow"
-        Action = [
-          "ecr:BatchCheckLayerAvailability",
-          "ecr:GetDownloadUrlForLayer",
-          "ecr:BatchGetImage",
-          "ecr:InitiateLayerUpload",
-          "ecr:UploadLayerPart",
-          "ecr:CompleteLayerUpload",
-          "ecr:PutImage",
-          "ecr:DescribeImages",
-          "ecr:ListImages"
-        ]
-        Resource = aws_ecr_repository.app.arn
-      },
-      {
-        Sid    = "ECSDeployRead"
-        Effect = "Allow"
-        Action = [
-          "ecs:DescribeTaskDefinition",
-          "ecs:DescribeClusters",
-          "ecs:DescribeServices",
-          "ecs:ListTaskDefinitions",
-          "ecs:ListTasks",
-          "ecs:DescribeTasks"
-        ]
-        Resource = "*"
-      },
-      {
-        Sid    = "ECSDeployWrite"
-        Effect = "Allow"
-        Action = [
-          "ecs:RegisterTaskDefinition",
-          "ecs:UpdateService",
-          "ecs:DeregisterTaskDefinition"
-        ]
-        Resource = "*"
-      },
-      {
-        Sid    = "PassRoleToECS"
-        Effect = "Allow"
-        Action = ["iam:PassRole"]
-        Resource = [
-          aws_iam_role.ecs_task_execution.arn,
-          "arn:aws:iam:::role/*"
-        ]
-      },
-      {
-        Sid    = "CloudWatchLogs"
-        Effect = "Allow"
-        Action = [
-          "logs:DescribeLogGroups",
-          "logs:DescribeLogStreams"
-        ]
-        Resource = "*"
       }
     ]
   })
@@ -557,8 +369,7 @@ resource "aws_ecs_task_definition" "app" {
   cpu                      = var.task_cpu[each.key]
   memory                   = var.task_memory[each.key]
 
-  execution_role_arn = aws_iam_role.ecs_task_execution.arn
-  task_role_arn      = aws_iam_role.ecs_task[each.key].arn
+  execution_role_arn = data.aws_iam_role.ecs_task_execution.arn
 
   container_definitions = jsonencode([
     {
@@ -641,8 +452,6 @@ resource "aws_ecs_service" "app" {
     Project     = var.project_name
     Environment = each.key
   }
-
-  depends_on = [aws_iam_role_policy_attachment.ecs_task_execution]
 }
 
 # ============================================================
@@ -651,17 +460,14 @@ resource "aws_ecs_service" "app" {
 
 output "ecr_repository_url" {
   value       = aws_ecr_repository.app.repository_url
-  description = "ECR repository URL — use in GitHub Actions to push images"
+  description = "ECR repository URL — add as AWS_ECR_REPOSITORY secret in GitHub"
 }
+
+# TODO
 
 output "ecr_repository_arn" {
   value       = aws_ecr_repository.app.arn
   description = "ECR repository ARN"
-}
-
-output "github_actions_role_arn" {
-  value       = aws_iam_role.github_actions.arn
-  description = "IAM role ARN to use in GitHub Actions (configure as AWS_ROLE_ARN secret)"
 }
 
 output "ecs_cluster_names" {
@@ -692,4 +498,9 @@ output "vpc_id" {
 output "public_subnet_ids" {
   value       = aws_subnet.public[*].id
   description = "Public subnet IDs"
+}
+
+output "ecs_task_execution_role_arn" {
+  value       = data.aws_iam_role.ecs_task_execution.arn
+  description = "ECS task execution role ARN (existing role, not managed by Terraform)"
 }

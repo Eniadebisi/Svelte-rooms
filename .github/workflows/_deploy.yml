@@ -1,0 +1,70 @@
+name: Deploy
+
+on:
+  workflow_call:
+    inputs:
+      environment:
+        required: true
+        type: string
+        description: "Target environment: dev | qa | prod"
+      image-tag:
+        required: true
+        type: string
+        description: "ECR image tag to deploy"
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment: ${{ inputs.environment }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id:     ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region:            ${{ secrets.AWS_REGION }}
+
+      - name: Set resource names
+        id: names
+        run: |
+          PROJECT="cicd-gh-action-test"
+          ENV="${{ inputs.environment }}"
+          APP="svelte-rooms"
+          echo "cluster=${PROJECT}-${ENV}"           >> $GITHUB_OUTPUT
+          echo "service=${PROJECT}-${ENV}-${APP}"    >> $GITHUB_OUTPUT
+          echo "task-family=${PROJECT}-${ENV}-${APP}" >> $GITHUB_OUTPUT
+          echo "container=${APP}"                    >> $GITHUB_OUTPUT
+
+      - name: Download current task definition
+        run: |
+          aws ecs describe-task-definition \
+            --task-definition ${{ steps.names.outputs.task-family }} \
+            --query taskDefinition \
+            > task-definition.json
+          echo "Downloaded task definition for ${{ steps.names.outputs.task-family }}"
+
+      - name: Update image in task definition
+        id: task-def
+        uses: aws-actions/amazon-ecs-render-task-definition@v1
+        with:
+          task-definition: task-definition.json
+          container-name:  ${{ steps.names.outputs.container }}
+          image:           ${{ secrets.ECR_REPOSITORY }}:${{ inputs.image-tag }}
+
+      - name: Deploy to ECS
+        uses: aws-actions/amazon-ecs-deploy-task-definition@v1
+        with:
+          task-definition:          ${{ steps.task-def.outputs.task-definition }}
+          service:                  ${{ steps.names.outputs.service }}
+          cluster:                  ${{ steps.names.outputs.cluster }}
+          wait-for-service-stability: true
+
+      - name: Confirm deployment
+        run: |
+          echo "Deployed ${{ secrets.ECR_REPOSITORY }}:${{ inputs.image-tag }}"
+          echo "Cluster: ${{ steps.names.outputs.cluster }}"
+          echo "Service: ${{ steps.names.outputs.service }}"

@@ -1,0 +1,88 @@
+name: Rollback
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: "Environment to roll back"
+        required: true
+        type: choice
+        options:
+          - dev
+          - qa
+          - prod
+      revision:
+        description: "Task definition revision number (leave blank for previous)"
+        required: false
+        type: string
+
+jobs:
+  rollback:
+    runs-on: ubuntu-latest
+    environment: ${{ inputs.environment }}
+
+    steps:
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id:     ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region:            ${{ secrets.AWS_REGION }}
+
+      - name: Set resource names
+        id: names
+        run: |
+          PROJECT="cicd-gh-action-test"
+          ENV="${{ inputs.environment }}"
+          APP="svelte-rooms"
+          echo "cluster=${PROJECT}-${ENV}"            >> $GITHUB_OUTPUT
+          echo "service=${PROJECT}-${ENV}-${APP}"     >> $GITHUB_OUTPUT
+          echo "task-family=${PROJECT}-${ENV}-${APP}" >> $GITHUB_OUTPUT
+
+      - name: Resolve rollback target
+        id: target
+        run: |
+          FAMILY="${{ steps.names.outputs.task-family }}"
+
+          if [ -n "${{ inputs.revision }}" ]; then
+            # Use the explicitly provided revision number
+            TARGET="${FAMILY}:${{ inputs.revision }}"
+            echo "Using specified revision: $TARGET"
+          else
+            # Get current active revision then step back one
+            CURRENT=$(aws ecs describe-services \
+              --cluster ${{ steps.names.outputs.cluster }} \
+              --services ${{ steps.names.outputs.service }} \
+              --query 'services[0].taskDefinition' \
+              --output text)
+            CURRENT_REV=$(echo $CURRENT | grep -o '[0-9]*$')
+            PREV_REV=$((CURRENT_REV - 1))
+
+            if [ $PREV_REV -lt 1 ]; then
+              echo "No previous revision exists — already at revision 1"
+              exit 1
+            fi
+
+            TARGET="${FAMILY}:${PREV_REV}"
+            echo "Rolling back from revision ${CURRENT_REV} to ${PREV_REV}"
+          fi
+
+          echo "task-def=${TARGET}" >> $GITHUB_OUTPUT
+
+      - name: Roll back ECS service
+        run: |
+          aws ecs update-service \
+            --cluster  ${{ steps.names.outputs.cluster }} \
+            --service  ${{ steps.names.outputs.service }} \
+            --task-definition ${{ steps.target.outputs.task-def }} \
+            --force-new-deployment
+
+          echo "Rollback initiated to: ${{ steps.target.outputs.task-def }}"
+
+      - name: Wait for service stability
+        run: |
+          aws ecs wait services-stable \
+            --cluster ${{ steps.names.outputs.cluster }} \
+            --services ${{ steps.names.outputs.service }}
+
+          echo "Rollback complete — service is stable"
