@@ -1,16 +1,16 @@
 import { prisma } from "$lib/server/db";
 import jwt from "jsonwebtoken";
-import { JWT_ACCESS_SECRET, MODE } from "$env/static/private";
+import { env } from "$env/dynamic/private";
 
 export const handle = async ({ event, resolve }) => {
   const { cookies, locals } = event;
   try {
-    if (MODE != "DEVELOPMENT") {
+    if (env.MODE != "DEVELOPMENT") {
       const authCookie = cookies.get("AuthorizationToken");
       if (authCookie && authCookie.startsWith("Bearer ")) {
         const token = authCookie.split(" ")[1];
         try {
-          const jwtUser = jwt.verify(token, JWT_ACCESS_SECRET);
+          const jwtUser = jwt.verify(token, env.JWT_ACCESS_SECRET);
           if (typeof jwtUser === "string") {
             throw new Error("Invalid JWT token or secret key");
           }
@@ -30,6 +30,7 @@ export const handle = async ({ event, resolve }) => {
             email: user.email,
             role: user.role,
             name: user.name,
+            generatedPW: user.generatedPW,
           };
 
           locals.user = sessionUser;
@@ -44,6 +45,7 @@ export const handle = async ({ event, resolve }) => {
         email: "dev@gmail.com",
         role: "Owner",
         name: "Development",
+        generatedPW: false,
       };
 
       locals.user = sessionUser;

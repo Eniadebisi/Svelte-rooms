@@ -31,7 +31,6 @@
     if (hasPermission(data.user, "UserManagement", "update")) {
       try {
         const selFunction = "resetPW";
-        return;
         const response = await fetch("/api/editUserRole", {
           method: "POST",
           body: JSON.stringify({ userId, selFunction, email, userName }),
@@ -55,7 +54,6 @@
       Title: "Confirm deleting '" + userName+"' ("+userId+")",
       confirmButton1: true,
       confirmButton1Func: () => {
-        console.log("Deleted user " + userId);
         closeModal();
       },
     });

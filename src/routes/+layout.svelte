@@ -26,4 +26,8 @@
     left: 0;
     background: rgba(0, 0, 0, 0.5);
   }
+
+  :global(body) {
+    font: 18px 'Open Sans', sans-serif;
+  }
 </style>
