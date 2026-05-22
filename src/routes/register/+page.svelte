@@ -21,8 +21,6 @@
       let pw = formData.get("password");
       let vPw = formData.get("verifyPassword");
       if (pw !== vPw) {
-        console.log(pw, vPw);
-
         cancel();
         error = "Passwords don't match";
         return;

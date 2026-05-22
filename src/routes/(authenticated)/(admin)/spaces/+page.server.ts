@@ -10,10 +10,13 @@ export const load = (async ({locals}) => {
 
   if (!user) throw error(400, { message: "Restricted" });
 
-  const { rooms } = await getRooms();
+  let { rooms } = await getRooms(1);
+  
   if (!rooms) throw new Error();
+  rooms = rooms.sort((a, b) => a.name.localeCompare(b.name));
 
-  const { locations } = await getLocations();
+
+  const { locations } = await getLocations(1);
   if (!locations) throw new Error();
 
   return { rooms, locations };
@@ -22,10 +25,7 @@ export const load = (async ({locals}) => {
 export const actions: Actions = {
   addRoom: async ({ cookies, request }) => {
     const data = Object.fromEntries(await request.formData());
-    const roomName = data.roomName;
-    const size = data.size;
-    const locId = data.locId;
-    const details = data.details;
+    const {roomName, size, locId, details} = data;
     if (!roomName || !size || !locId || !details) {
       return fail(401, {
         error: "Missing one or more details",
@@ -94,13 +94,14 @@ export const actions: Actions = {
     const data = Object.fromEntries(await request.formData());
     const updatedLocName = data.updatedLocName;
     const locId = data.locId;
-    if (!updatedLocName || !locId) {
+    const visibility = parseInt(data.visibility.toString());
+    if ((!updatedLocName && !visibility) || !locId) {
       return fail(401, {
         error: "Missing name or ID",
         form: "editLocation",
       });
     }
-    const { error } = await editLocation(parseInt(locId.toString()), updatedLocName.toString());
+    const { error } = await editLocation(parseInt(locId.toString()), updatedLocName.toString(), visibility);
 
     if (error) {
       return fail(401, {
