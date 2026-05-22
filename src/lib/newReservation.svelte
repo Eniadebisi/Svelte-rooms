@@ -34,7 +34,7 @@
 
     if (recur) {
       RecurrencePattern = recur == "Weekly" ? dayjs(startTime).format("dddd") : "Daily";
-      RecurrenceEndDate = dayjs(recurEndDate).tz(timeZone).endOf("day").utc().toISOString();
+      RecurrenceEndDate = dayjs(recurEndDate).tz(PUBLIC_TIME_ZONE).endOf("day").utc().toISOString();
     }
 
     const data = {

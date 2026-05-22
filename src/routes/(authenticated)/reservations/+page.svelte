@@ -1,5 +1,7 @@
 <script lang="ts">
   import type { PageData } from "./$types";
+  import { env } from "$env/dynamic/public";
+  import config from "$lib/server/config.json"
   import { closeModal, openModal } from "svelte-modals";
   import { browser } from "$app/environment";
   import dayjs from "dayjs";
@@ -7,7 +9,7 @@
   import ReservationEdit from "$lib/ReservationEdit.svelte";
   import NewReservation from "$lib/newReservation.svelte";
   import { acts, Notifications } from "@tadashi/svelte-notification";
-  
+
   export let data: PageData;
   let date = data.date ? data.date : new Date();
   let staticDate = dayjs(date).format("YYYY-MM-DD");
@@ -33,7 +35,7 @@
         openReservationEdit(resvObj);
       },
       refresh: (rDate: string) => {
-        window.location.reload()
+        window.location.reload();
         closeModal();
       },
       notify: (mode: string, message: string) => {
@@ -51,7 +53,7 @@
         }
         closeModal();
       },
-      timeZone: data.timeZone
+      timeZone: config.timeZone,
     });
   }
   function newReservation() {
@@ -64,7 +66,7 @@
         }
         closeModal();
       },
-      timeZone: data.timeZone
+      timeZone: config.timeZone,
     });
   }
 </script>

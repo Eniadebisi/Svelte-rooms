@@ -1,7 +1,6 @@
 import { getLocations, getReservations, getRooms } from "$lib/server/rooms.model";
-import { TIME_ZONE } from "$env/static/private";
-
 import dayjs from "dayjs";
+import config from "$lib/server/config.json"
 import timezone from "dayjs/plugin/timezone";
 dayjs.extend(timezone);
 
@@ -9,20 +8,23 @@ export async function load({ parent, url }) {
   const { user } = await parent();
   const sDate = url.searchParams.get("date");
 
-  let start, end, date = new Date()
+  const PUBLIC_TIME_ZONE = config.timeZone;
+  let start,
+    end,
+    date = new Date();
   if (sDate != null) {
-    date = new Date(sDate)
-    
-    start = dayjs(date).tz(TIME_ZONE).startOf("day").utc();
-    end = dayjs(date).tz(TIME_ZONE).endOf("day").utc();
+    date = new Date(sDate);
+
+    start = dayjs(date).tz(PUBLIC_TIME_ZONE).startOf("day").utc();
+    end = dayjs(date).tz(PUBLIC_TIME_ZONE).endOf("day").utc();
   } else {
-    start = dayjs(date).tz(TIME_ZONE).startOf("day").utc();
-    end = dayjs(date).tz(TIME_ZONE).endOf("day").utc();
+    start = dayjs(date).tz(PUBLIC_TIME_ZONE).startOf("day").utc();
+    end = dayjs(date).tz(PUBLIC_TIME_ZONE).endOf("day").utc();
   }
-  
+
   let { rooms, error: roomError } = await getRooms();
   if (roomError || !rooms) throw new Error();
-  rooms = rooms.sort((a, b) => a.name.localeCompare(b.name))
+  rooms = rooms.sort((a, b) => a.name.localeCompare(b.name));
 
   const { locations, error: locError } = await getLocations();
   if (locError || !locations) throw new Error();
@@ -30,5 +32,5 @@ export async function load({ parent, url }) {
   const { reservations, error: reservError } = await getReservations(start, end);
   if (reservError || !reservations) throw new Error();
 
-  return { user, rooms, locations, reservations, date, TIME_ZONE };
+  return { user, rooms, locations, reservations, date, PUBLIC_TIME_ZONE };
 }

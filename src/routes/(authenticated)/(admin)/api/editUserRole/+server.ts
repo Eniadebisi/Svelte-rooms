@@ -1,18 +1,18 @@
 import { resetPW, setUserRole } from "$lib/server/user.model.js";
 import { json } from "@sveltejs/kit";
 import nodemailer from "nodemailer";
-import { CONTACT_EMAIL, SITE_NAME, SMTP_HOST, SMTP_PORT } from "$env/static/private";
-import { AUTH_EMAIL, AUTH_EMAIL_PW } from "$env/dynamic/private";
+import { env } from "$env/dynamic/private";
+import config from "$lib/server/config.json"
 import dayjs from "dayjs";
 
 const transporter = nodemailer.createTransport({
-  host: SMTP_HOST,
-  port: SMTP_PORT,
+  host: config.smtp_host,
+  port: config.smtp_port,
   secure: false,
   requireTLS: true,
   auth: {
-    user: AUTH_EMAIL,
-    pass: AUTH_EMAIL_PW,
+    user: env.AUTH_EMAIL,
+    pass: env.AUTH_EMAIL_PW,
   },
 });
 
@@ -40,10 +40,10 @@ export async function POST({ request }) {
           return json({ error: error }, { status: 400 });
         }
         const info = await transporter.sendMail({
-          from: "Support <" + CONTACT_EMAIL + ">",
+          from: "Support <" + config.contactEmail + ">",
           to: email,
           subject: "Room reservation password reset",
-          html: "<div style='text-align: center;'> <h1> " + SITE_NAME + " Reset</h1> <p>Hello, " + userName + ". This will be your new temporary password: \"" + newTempPassword + "\"</p>  <p>You will have until " + dayjs(deadline).format('DD/MM/YYYY HH:mm') + " to reset your password from now.</p></div>",
+          html: "<div style='text-align: center;'> <h1> " + config.siteName + " Reset</h1> <p>Hello, " + userName + ". This will be your new temporary password: \"" + newTempPassword + "\"</p>  <p>You will have until " + dayjs(deadline).format('DD/MM/YYYY HH:mm') + " to reset your password from now.</p></div>",
         });
         // console.log("Message sent " + info.messageId);
         return json({ error: false }, { status: 201 });

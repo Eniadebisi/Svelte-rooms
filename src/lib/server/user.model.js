@@ -1,5 +1,5 @@
-import { CONTACT_EMAIL } from "$env/static/private";
-import { JWT_ACCESS_SECRET } from "$env/dynamic/private";
+import { env } from "$env/dynamic/private";
+import config from "$lib/server/config.json"
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import { prisma } from "./db";
@@ -43,7 +43,7 @@ export async function checkSignIn(email, password) {
   if (!passwordIsValid) return { error: "Incorrect password" };
 
   // Check if user role is exist
-  if (user.role == "Restricted") return { error: "User restricted, please request access from admin. Contact email:" + CONTACT_EMAIL };
+  if (user.role == "Restricted") return { error: "User restricted, please request access from admin. Contact email:" + config.contactEmail };
 
   const jwtUser = {
     id: user.id,
@@ -52,7 +52,7 @@ export async function checkSignIn(email, password) {
   };
 
   // Generate token
-  return { token: jwt.sign(jwtUser, JWT_ACCESS_SECRET, { expiresIn: "1d" }) };
+  return { token: jwt.sign(jwtUser, env.JWT_ACCESS_SECRET, { expiresIn: "1d" }) };
 }
 
 export async function getUsers() {
