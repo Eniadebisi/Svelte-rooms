@@ -1,7 +1,5 @@
 <script lang="ts">
   import type { PageData } from "./$types";
-  import { env } from "$env/dynamic/public";
-  import config from "$lib/server/config.json"
   import { closeModal, openModal } from "svelte-modals";
   import { browser } from "$app/environment";
   import dayjs from "dayjs";
@@ -53,7 +51,7 @@
         }
         closeModal();
       },
-      timeZone: config.timeZone,
+      timeZone: data.timeZone,
     });
   }
   function newReservation() {
@@ -66,7 +64,7 @@
         }
         closeModal();
       },
-      timeZone: config.timeZone,
+      timeZone: data.timeZone,
     });
   }
 </script>

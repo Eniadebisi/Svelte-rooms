@@ -8,18 +8,17 @@ export async function load({ parent, url }) {
   const { user } = await parent();
   const sDate = url.searchParams.get("date");
 
-  const PUBLIC_TIME_ZONE = config.timeZone;
   let start,
     end,
     date = new Date();
   if (sDate != null) {
     date = new Date(sDate);
 
-    start = dayjs(date).tz(PUBLIC_TIME_ZONE).startOf("day").utc();
-    end = dayjs(date).tz(PUBLIC_TIME_ZONE).endOf("day").utc();
+    start = dayjs(date).tz(config.timeZone).startOf("day").utc();
+    end = dayjs(date).tz(config.timeZone).endOf("day").utc();
   } else {
-    start = dayjs(date).tz(PUBLIC_TIME_ZONE).startOf("day").utc();
-    end = dayjs(date).tz(PUBLIC_TIME_ZONE).endOf("day").utc();
+    start = dayjs(date).tz(config.timeZone).startOf("day").utc();
+    end = dayjs(date).tz(config.timeZone).endOf("day").utc();
   }
 
   let { rooms, error: roomError } = await getRooms();
@@ -32,5 +31,5 @@ export async function load({ parent, url }) {
   const { reservations, error: reservError } = await getReservations(start, end);
   if (reservError || !reservations) throw new Error();
 
-  return { user, rooms, locations, reservations, date, PUBLIC_TIME_ZONE };
+  return { user, rooms, locations, reservations, date, timeZone: config.timeZone };
 }
