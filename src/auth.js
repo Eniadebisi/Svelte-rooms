@@ -1,6 +1,6 @@
 import { prisma } from "$lib/server/db";
 import jwt from "jsonwebtoken";
-import { JWT_ACCESS_SECRET, MODE } from "$env/static/private";
+import { JWT_ACCESS_SECRET, MODE } from "$env/dynamic/private";
 
 export const handle = async ({ event, resolve }) => {
   const { cookies, locals } = event;

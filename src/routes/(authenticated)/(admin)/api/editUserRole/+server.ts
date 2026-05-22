@@ -1,7 +1,8 @@
 import { resetPW, setUserRole } from "$lib/server/user.model.js";
 import { json } from "@sveltejs/kit";
 import nodemailer from "nodemailer";
-import { AUTH_EMAIL, AUTH_EMAIL_PW, CONTACT_EMAIL, SITE_NAME, SMTP_HOST, SMTP_PORT } from "$env/static/private";
+import { CONTACT_EMAIL, SITE_NAME, SMTP_HOST, SMTP_PORT } from "$env/static/private";
+import { AUTH_EMAIL, AUTH_EMAIL_PW } from "$env/dynamic/private";
 import dayjs from "dayjs";
 
 const transporter = nodemailer.createTransport({

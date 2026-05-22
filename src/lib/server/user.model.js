@@ -1,4 +1,5 @@
-import { JWT_ACCESS_SECRET, CONTACT_EMAIL } from "$env/static/private";
+import { CONTACT_EMAIL } from "$env/static/private";
+import { JWT_ACCESS_SECRET } from "$env/dynamic/private";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import { prisma } from "./db";
