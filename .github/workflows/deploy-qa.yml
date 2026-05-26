@@ -27,9 +27,7 @@ jobs:
         run: |
           SHA=$(echo $GITHUB_SHA | head -c7)
           REPO="${{ secrets.ECR_REPOSITORY }}"
-          echo "::add-mask::$REPO"
-
-
+        
           docker pull $REPO:dev-${SHA}
 
           docker tag $REPO:dev-${SHA} $REPO:qa-${SHA}
