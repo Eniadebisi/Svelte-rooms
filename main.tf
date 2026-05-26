@@ -15,7 +15,7 @@ terraform {
     bucket         = "svelte-rooms-tf-state"
     key            = "svelte-rooms/terraform.tfstate-v2"
     region         = "us-east-1"  
-    use_lockfile   = "true"
+    use_lockfile   = true
     encrypt        = true
   }
 }
