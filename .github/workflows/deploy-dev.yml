@@ -1,4 +1,4 @@
-name: CI/CD Pipeline
+name: Deploy Dev & Promote 
 
 on:
   push:
@@ -29,6 +29,9 @@ jobs:
         uses: hashicorp/setup-terraform@v3
         with:
           terraform_version: "1.5.0"
+
+      - name: Terraform validate
+        run: terraform validate
 
       - name: Terraform fmt check
         run: terraform fmt -recursive -check
@@ -97,7 +100,7 @@ jobs:
           docker rm svelte-rooms-test
 
   deploy-dev:
-    name: Deploy to Dev
+    name: Deploy AWS Dev
     needs: [build, test]
     uses: ./.github/workflows/_deploy.yml
     with:
@@ -105,11 +108,22 @@ jobs:
       image-tag: ${{ needs.build.outputs.image-tag }}
     secrets: inherit
 
-  deploy-qa:
-    name: Deploy to QA
-    needs: [build, deploy-dev]
-    uses: ./.github/workflows/_deploy.yml
-    with:
-      environment: qa
-      image-tag: ${{ needs.build.outputs.image-tag }}
-    secrets: inherit
+  promote-qa:
+    name: Promote QA
+    needs: [deploy-dev]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Configure git
+        run: |
+          git config user.name "github-actions"
+          git config user.email "github-actions@github.com"
+
+      - name: Push to QA branch
+        run: git push origin HEAD:refs/heads/qa
