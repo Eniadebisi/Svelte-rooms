@@ -39,7 +39,6 @@ jobs:
           SHA=$(echo $GITHUB_SHA | head -c7)
           ENV="${{ inputs.environment }}"
           echo "tag=${ENV}-${SHA}" >> $GITHUB_OUTPUT
-          echo "::add-mask::${{ steps.login-ecr.outputs.registry }}"
           echo "env=${ENV}" >> $GITHUB_OUTPUT
 
       - name: Build and push image
@@ -51,8 +50,6 @@ jobs:
           ENV="${{ steps.meta.outputs.env }}"
 
           echo "Building image"
-          echo "::add-mask::$REPO"
-          echo "::add-mask::$TAG"
 
           docker build \
             -t $REPO:$TAG -t $REPO:${ENV}-latest .
