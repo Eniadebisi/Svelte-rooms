@@ -83,7 +83,7 @@ SvelteKit Route (+page.server.ts)
 | Styling            | Bootstrap 5 + SCSS      | 5.3.3   | Component library, modern CSS API     |
 | Testing            | Vitest                  | 4.0.18  | Fast unit tests, ESM-native           |
 | Type Safety        | TypeScript              | 5.0.0   | Full codebase type checking           |
-| Node               | -                       | 20.x    | Required version                      |
+| Node               | -                       | 22.x    | Required version                      |
 
 ## API Surface
 
