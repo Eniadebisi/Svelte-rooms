@@ -16,6 +16,7 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    environment: ${{ inputs.environment || 'dev' }}
     outputs:
       image-tag: ${{ steps.meta.outputs.tag }}
 
@@ -51,7 +52,12 @@ jobs:
         run: |
           echo "TAG=$TAG"
           echo "ENV=$ENV"
-          docker build -t $REPO:$TAG -t $REPO:$ENV-latest .
+          docker build \
+            --build-arg JWT_ACCESS_SECRET="${{ secrets.JWT_ACCESS_SECRET }}" \
+            --build-arg MODE="${{ secrets.MODE }}" \
+            --build-arg AUTH_EMAIL="${{ secrets.AUTH_EMAIL }}" \
+            --build-arg AUTH_EMAIL_PW="${{ secrets.AUTH_EMAIL_PW }}" \
+            -t $REPO:$TAG -t $REPO:$ENV-latest .
           docker push $REPO:$TAG
           docker push $REPO:$ENV-latest
           echo "Built and pushed $REPO:$TAG"

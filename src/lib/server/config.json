@@ -1,0 +1,7 @@
+{
+  "siteName": "Svelte-Rooms",
+  "contactEmail": "admin@example.com",
+  "timeZone": "America/New_York",
+  "smtp_host": "smtp.office365.com",
+  "smtp_port": 587
+}
