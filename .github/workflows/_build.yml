@@ -1,22 +1,20 @@
-name: Build and Push
+name: Build
 
 on:
-  push:
-    branches: [dev]
   workflow_call:
     inputs:
       environment:
         required: true
         type: string
+        description: "Build on dev | qa | prod"
     outputs:
       image-tag:
-        description: "The image tag that was built and pushed"
+        description: "ECR image tag built and pushed"
         value: ${{ jobs.build.outputs.image-tag }}
 
 jobs:
   build:
     runs-on: ubuntu-latest
-    environment: ${{ inputs.environment || 'dev' }}
     outputs:
       image-tag: ${{ steps.meta.outputs.tag }}
 
@@ -27,9 +25,9 @@ jobs:
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
-          aws-access-key-id:     ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region:            ${{ secrets.AWS_REGION }}
+          aws-region: ${{ secrets.AWS_REGION }}
 
       - name: Login to ECR
         id: login-ecr
@@ -39,25 +37,24 @@ jobs:
         id: meta
         run: |
           SHA=$(echo $GITHUB_SHA | head -c7)
-          ENV=${{ inputs.environment || 'dev' }}
+          ENV="${{ inputs.environment }}"
           echo "tag=${ENV}-${SHA}" >> $GITHUB_OUTPUT
           echo "env=${ENV}" >> $GITHUB_OUTPUT
 
       - name: Build and push image
         env:
           REGISTRY: ${{ steps.login-ecr.outputs.registry }}
-          REPO:     ${{ secrets.ECR_REPOSITORY }}
-          TAG:      ${{ steps.meta.outputs.tag }}
-          ENV:      ${{ steps.meta.outputs.env }}
         run: |
-          echo "TAG=$TAG"
-          echo "ENV=$ENV"
+          REPO="${{ secrets.ECR_REPOSITORY }}"
+          TAG="${{ steps.meta.outputs.tag }}"
+          ENV="${{ steps.meta.outputs.env }}"
+
+          echo "Building image"
+
           docker build \
-            --build-arg JWT_ACCESS_SECRET="${{ secrets.JWT_ACCESS_SECRET }}" \
-            --build-arg MODE="${{ secrets.MODE }}" \
-            --build-arg AUTH_EMAIL="${{ secrets.AUTH_EMAIL }}" \
-            --build-arg AUTH_EMAIL_PW="${{ secrets.AUTH_EMAIL_PW }}" \
-            -t $REPO:$TAG -t $REPO:$ENV-latest .
+            -t $REPO:$TAG -t $REPO:${ENV}-latest .
+
           docker push $REPO:$TAG
-          docker push $REPO:$ENV-latest
-          echo "Built and pushed $REPO:$TAG"
+          docker push $REPO:${ENV}-latest
+
+          echo "Built and pushed"

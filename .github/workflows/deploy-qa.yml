@@ -1,20 +1,69 @@
-name: Deploy to QA
+name: Deploy QA & Promote
 
 on:
   push:
     branches: [qa]
 
 jobs:
-  build:
-    uses: ./.github/workflows/build.yml
-    with:
-      environment: qa
-    secrets: inherit
+  retag:
+    name: Retag QA
+    runs-on: ubuntu-latest
+    outputs:
+      image-tag: ${{ steps.meta.outputs.tag }}
 
-  deploy:
-    needs: build
+    steps:
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.AWS_REGION }}
+
+      - name: Login to ECR
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Retag image for QA
+        id: meta
+        run: |
+          SHA=$(echo $GITHUB_SHA | head -c7)
+          REPO="${{ secrets.ECR_REPOSITORY }}"
+        
+          docker pull $REPO:dev-${SHA}
+
+          docker tag $REPO:dev-${SHA} $REPO:qa-${SHA}
+          docker tag $REPO:dev-${SHA} $REPO:qa-latest
+
+          docker push $REPO:qa-${SHA}
+          docker push $REPO:qa-latest
+
+          echo "tag=qa-${SHA}" >> $GITHUB_OUTPUT
+
+  deploy-qa:
+    name: Deploy AWS QA
+    needs: [retag]
     uses: ./.github/workflows/_deploy.yml
     with:
       environment: qa
-      image-tag:   ${{ needs.build.outputs.image-tag }}
+      image-tag: ${{ needs.retag.outputs.image-tag }}
     secrets: inherit
+
+  promote-prod:
+    name: Promote Prod
+    needs: [deploy-qa]
+    runs-on: ubuntu-latest
+    environment: prod-approval
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Configure git
+        run: |
+          git config user.name "github-actions"
+          git config user.email "github-actions@github.com"
+
+      - name: Push to prod branch
+        run: git push origin HEAD:refs/heads/prod

@@ -6,17 +6,17 @@ terraform {
   required_version = ">= 1.5.0"
   required_providers {
     aws = {
-      source  = "hashicorp/aws" 
+      source  = "hashicorp/aws"
       version = "~> 5.0"
     }
   }
 
   backend "s3" {
-    bucket         = "svelte-rooms-tf-state"
-    key            = "svelte-rooms/terraform.tfstate-v2"
-    region         = "us-east-1"  
-    use_lockfile   = "false"
-    encrypt        = true
+    bucket       = "svelte-rooms-tf-state"
+    key          = "svelte-rooms/terraform.tfstate-v2"
+    region       = "us-east-1"
+    use_lockfile = true
+    encrypt      = true
   }
 }
 
@@ -59,7 +59,7 @@ variable "container_port" {
 }
 
 variable "task_cpu" {
-  type        = map(number)
+  type = map(number)
   default = {
     dev  = 256
     qa   = 256
@@ -69,7 +69,7 @@ variable "task_cpu" {
 }
 
 variable "task_memory" {
-  type        = map(number)
+  type = map(number)
   default = {
     dev  = 512
     qa   = 512
@@ -79,7 +79,7 @@ variable "task_memory" {
 }
 
 variable "desired_count" {
-  type        = map(number)
+  type = map(number)
   default = {
     dev  = 1
     qa   = 1
@@ -89,7 +89,7 @@ variable "desired_count" {
 }
 
 variable "log_retention_days" {
-  type        = map(number)
+  type = map(number)
   default = {
     dev  = 7
     qa   = 14
