@@ -13,11 +13,12 @@ jobs:
 
     steps:
       - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v4
+        uses: aws-actions/configure-aws-credentials@v6
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ secrets.AWS_REGION }}
+          mask-aws-account-id:   true
 
       - name: Login to ECR
         uses: aws-actions/amazon-ecr-login@v2
@@ -48,15 +49,15 @@ jobs:
     secrets: inherit
 
   promote-prod:
-    name: Promote Prod
+    name: Promote to Prod
     needs: [deploy-qa]
     runs-on: ubuntu-latest
-    environment: prod-approval
+    environment: prod
     permissions:
       contents: write
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           fetch-depth: 0
 
@@ -65,5 +66,13 @@ jobs:
           git config user.name "github-actions"
           git config user.email "github-actions@github.com"
 
-      - name: Push to prod branch
-        run: git push origin HEAD:refs/heads/prod
+      - name: Create PR from qa to prod
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh pr create \
+            --base prod \
+            --head qa \
+            --title "Promote QA to prod" \
+            --body "Elevate qa review" \
+            || echo "PR already exists or no changes to promote"

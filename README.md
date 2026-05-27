@@ -91,7 +91,7 @@ SvelteKit Route (+page.server.ts)
 | Styling            | Bootstrap 5 + SCSS      | 5.3.3   | Component library, modern CSS API     |
 | Testing            | Vitest                  | 4.0.18  | Fast unit tests, ESM-native           |
 | Type Safety        | TypeScript              | 5.0.0   | Full codebase type checking           |
-| Node               | -                       | 20.x    | Required version                      |
+| Node               | -                       | 2.x    | Required version                      |
 | Deployment         | AWS ECS Fargate         | -       | Containerized, serverless             |
 | Container Registry | AWS ECR                 | -       | Private Docker image registry         |
 | IaC                | Terraform               | 1.5+    | AWS infrastructure as code            |
@@ -253,7 +253,7 @@ DATABASE_URL=mysql://user:pass@localhost:3306/svelte_rooms
 
 ### Prerequisites
 
-- Node.js 20.x
+- Node.js 22.x
 - Docker Desktop (for local container testing)
 - MariaDB or MySQL instance
 
