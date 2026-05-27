@@ -75,4 +75,3 @@ jobs:
             --head qa \
             --title "Promote QA to prod" \
             --body "Elevate qa review" \
-            || echo "PR already exists or no changes to promote"

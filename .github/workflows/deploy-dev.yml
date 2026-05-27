@@ -149,4 +149,3 @@ jobs:
             --head dev \
             --title "Promote dev to QA" \
             --body "Elevate dev changes" \
-            || echo "PR already exists or no changes to promote"
