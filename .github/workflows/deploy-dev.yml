@@ -126,6 +126,7 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: write
+      pull-requests: write
     steps:
       - name: Checkout code
         uses: actions/checkout@v6
@@ -137,9 +138,6 @@ jobs:
           git config user.name "github-actions"
           git config user.email "github-actions@github.com"
 
-      - name: Push to QA branch
-        run: git push origin HEAD:refs/heads/qa
-
       - name: Create PR from dev to qa
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -148,4 +146,4 @@ jobs:
             --base qa \
             --head dev \
             --title "Promote dev to QA" \
-            --body "Elevate dev changes" \
+            --body "Created by github actions" \

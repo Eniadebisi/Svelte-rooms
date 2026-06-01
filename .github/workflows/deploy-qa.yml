@@ -55,6 +55,7 @@ jobs:
     environment: prod
     permissions:
       contents: write
+      pull-requests: write
     steps:
       - name: Checkout code
         uses: actions/checkout@v6
@@ -74,4 +75,4 @@ jobs:
             --base prod \
             --head qa \
             --title "Promote QA to prod" \
-            --body "Elevate qa review" \
+            --body "Created by github actions" \

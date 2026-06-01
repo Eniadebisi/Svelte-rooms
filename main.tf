@@ -337,14 +337,14 @@ resource "aws_cloudwatch_metric_alarm" "ecs_running_tasks" {
   for_each            = toset(var.environments)
   alarm_name          = "${var.project_name}-${each.key}-running-tasks-zeroed"
   comparison_operator = "LessThanThreshold"
-  evaluation_periods  = 2
+  evaluation_periods  = 3
   metric_name         = "RunningTaskCount"
   namespace           = "ECS/ContainerInsights"
   period              = 60
   statistic           = "Average"
   threshold           = 1
-  alarm_description   = "ECS ${each.key} running task count dropped below 1"
-  treat_missing_data  = "breaching"
+  alarm_description   = "ECS ${each.key} running task is 0"
+  treat_missing_data = each.key == "prod" ? "breaching" : "notBreaching"
 
   dimensions = {
     ClusterName = aws_ecs_cluster.env[each.key].name
