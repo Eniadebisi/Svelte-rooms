@@ -1,4 +1,4 @@
-name: Deploy Dev & Promote 
+name: Deploy Dev & Promote
 
 on:
   push:
@@ -11,10 +11,10 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Setup Node
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v6
         with:
           node-version: 22
           cache: npm
@@ -26,14 +26,15 @@ jobs:
         run: npx prisma validate
 
       - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v4
+        uses: aws-actions/configure-aws-credentials@v6
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ secrets.AWS_REGION }}
+          mask-aws-account-id: true
 
       - name: Setup Terraform
-        uses: hashicorp/setup-terraform@v3
+        uses: hashicorp/setup-terraform@v4.0.1
         with:
           terraform_version: "1.10.0"
 
@@ -47,86 +48,16 @@ jobs:
         run: terraform fmt -recursive -check
         continue-on-error: true
 
-  build:
-    name: Build Package
-    needs: code-commit
-    uses: ./.github/workflows/_build.yml
-    with:
-      environment: dev
-    secrets: inherit
-
-  test:
-    name: Test and Validate
-    needs: build
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Setup Node
-        uses: actions/setup-node@v4
-        with:
-          node-version: 22
-          cache: npm
-
-      - name: Install dependencies
-        run: npm ci
-
-      - name: Run unit tests
-        run: npm run test
-        continue-on-error: true
-
-      - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v4
-        with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: ${{ secrets.AWS_REGION }}
-
-      - name: Login to ECR
-        uses: aws-actions/amazon-ecr-login@v2
-
-      - name: Pull built image
-        run: |
-          docker pull ${{ secrets.ECR_REPOSITORY }}:${{ needs.build.outputs.image-tag }}
-
-      - name: Run container health check
-        run: |
-          docker run -d \
-            --name svelte-rooms-test \
-            -p 3000:3000 \
-            -e NODE_ENV=production \
-            -e PORT=3000 \
-            ${{ secrets.ECR_REPOSITORY }}:${{ needs.build.outputs.image-tag }}
-
-          echo "Waiting for container to start..."
-          sleep 15
-
-          curl --retry 5 --retry-delay 5 --retry-connrefused \
-            --fail http://localhost:3000/health
-
-          docker stop svelte-rooms-test
-          docker rm svelte-rooms-test
-
-  deploy-dev:
-    name: Deploy AWS Dev
-    needs: [build, test]
-    uses: ./.github/workflows/_deploy.yml
-    with:
-      environment: dev
-      image-tag: ${{ needs.build.outputs.image-tag }}
-    secrets: inherit
-
   promote-qa:
-    name: Promote QA
-    needs: [deploy-dev]
+    name: Promote to QA
+    needs: [code-commit]
     runs-on: ubuntu-latest
     permissions:
       contents: write
+      pull-requests: write
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           fetch-depth: 0
 
@@ -135,5 +66,13 @@ jobs:
           git config user.name "github-actions"
           git config user.email "github-actions@github.com"
 
-      - name: Push to QA branch
-        run: git push origin HEAD:refs/heads/qa
+      - name: Create PR from dev to qa
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh pr create \
+            --base qa \
+            --head dev \
+            --title "Promote dev to QA" \
+            --body "Created by github actions" \
+            || echo "PR exists"

@@ -1,62 +1,133 @@
-name: Deploy QA & Promote
+name: Test QA, Deploy & Promote
 
 on:
   push:
     branches: [qa]
 
 jobs:
-  retag:
-    name: Retag QA
+  build:
+    name: Build Package
+    uses: ./.github/workflows/_build.yml
+    with:
+      environment: qa
+    permissions:
+      contents: write
+
+    secrets: inherit
+
+  test:
+    name: Test and Validate
+    needs: build
     runs-on: ubuntu-latest
-    outputs:
-      image-tag: ${{ steps.meta.outputs.tag }}
 
     steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+
+      - name: Setup Node
+        uses: actions/setup-node@v6
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run unit tests
+        run: npm run test
+        continue-on-error: true
+        # No tests configured
+
       - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v4
+        uses: aws-actions/configure-aws-credentials@v6
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ secrets.AWS_REGION }}
+          mask-aws-account-id: true
 
       - name: Login to ECR
         uses: aws-actions/amazon-ecr-login@v2
 
-      - name: Retag image for QA
-        id: meta
+      - name: Pull built image
         run: |
-          SHA=$(echo $GITHUB_SHA | head -c7)
-          REPO="${{ secrets.ECR_REPOSITORY }}"
-        
-          docker pull $REPO:dev-${SHA}
+          docker pull ${{ secrets.ECR_REPOSITORY }}:${{ needs.build.outputs.image-tag }}
 
-          docker tag $REPO:dev-${SHA} $REPO:qa-${SHA}
-          docker tag $REPO:dev-${SHA} $REPO:qa-latest
+      - name: Run container health check
+        run: |
+          docker run -d \
+            --name svelte-rooms-test \
+            -p 3000:3000 \
+            -e NODE_ENV=production \
+            -e PORT=3000 \
+            ${{ secrets.ECR_REPOSITORY }}:${{ needs.build.outputs.image-tag }}
 
-          docker push $REPO:qa-${SHA}
-          docker push $REPO:qa-latest
+          echo "Waiting for container to start..."
+          sleep 15
 
-          echo "tag=qa-${SHA}" >> $GITHUB_OUTPUT
+          curl --retry 5 --retry-delay 5 --retry-connrefused \
+            --fail http://localhost:3000/health
 
-  deploy-qa:
+          docker stop svelte-rooms-test
+          docker rm svelte-rooms-test
+
+  deploy:
     name: Deploy AWS QA
-    needs: [retag]
+    needs: [build, test]
     uses: ./.github/workflows/_deploy.yml
     with:
       environment: qa
-      image-tag: ${{ needs.retag.outputs.image-tag }}
+      image-tag: ${{ needs.build.outputs.image-tag }}
     secrets: inherit
 
-  promote-prod:
-    name: Promote Prod
-    needs: [deploy-qa]
+  gittag:
+    name: Tag for git push
+    needs: [deploy]
     runs-on: ubuntu-latest
-    environment: prod-approval
-    permissions:
-      contents: write
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+      - name: Bump version and tag
+        run: |
+          git fetch --tags
+
+          LAST_TAG=$(git tag -l 'v*' | sort -V | tail -1)
+          LAST_TAG=${LAST_TAG:-v0.0.0}
+
+          MAJOR=$(echo $LAST_TAG | cut -d. -f1 | tr -d v)
+          MINOR=$(echo $LAST_TAG | cut -d. -f2)
+          PATCH=$(echo $LAST_TAG | cut -d. -f3)
+  
+          COMMIT_MSG=$(git log --format=%s -1 HEAD^2)
+
+          if echo "$COMMIT_MSG" | grep -qiE 'breaking|feat!'; then
+            MAJOR=$((MAJOR + 1)); MINOR=0; PATCH=0
+          elif echo "$COMMIT_MSG" | grep -qi '^feat'; then
+            MINOR=$((MINOR + 1)); PATCH=0
+          else
+            PATCH=$((PATCH + 1))
+          fi
+
+          NEW_TAG="v${MAJOR}.${MINOR}.${PATCH}"
+          echo "VERSION=$NEW_TAG" >> $GITHUB_ENV
+
+          git config user.name "github-actions"
+          git config user.email "github-actions@github.com"
+          git tag -a "$NEW_TAG" -m "$COMMIT_MSG"
+          git push origin "$NEW_TAG"
+
+  promote-prod:
+    name: Promote to Prod
+    needs: [deploy]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
         with:
           fetch-depth: 0
 
@@ -65,5 +136,13 @@ jobs:
           git config user.name "github-actions"
           git config user.email "github-actions@github.com"
 
-      - name: Push to prod branch
-        run: git push origin HEAD:refs/heads/prod
+      - name: Create PR from qa to prod
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh pr create \
+            --base main \
+            --head qa \
+            --title "Promote QA to prod" \
+            --body "Created by github actions" \
+            || echo "PR exists"
