@@ -100,7 +100,7 @@ jobs:
           MINOR=$(echo $LAST_TAG | cut -d. -f2)
           PATCH=$(echo $LAST_TAG | cut -d. -f3)
   
-          COMMIT_MSG=$(git log --format=%s -1 HEAD^2)
+          COMMIT_MSG=$(git log --format=%s -1 HEAD^2 2>/dev/null || git log --format=%s -1 HEAD)
 
           if echo "$COMMIT_MSG" | grep -qiE 'breaking|feat!'; then
             MAJOR=$((MAJOR + 1)); MINOR=0; PATCH=0

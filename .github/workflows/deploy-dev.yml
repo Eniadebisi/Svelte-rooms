@@ -47,13 +47,13 @@ jobs:
 
       - name: Terraform validate
         run: terraform validate
-        
+
       - name: Scan Terraform config
         uses: aquasecurity/trivy-action@master
         with:
           scan-type: config
           hide-progress: true
-
+          skip-dirs: 'node_modules' 
           scan-ref: '.'
           severity: 'HIGH,CRITICAL'
           exit-code: '1'

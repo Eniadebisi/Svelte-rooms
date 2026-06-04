@@ -222,8 +222,8 @@ resource "aws_security_group" "ecs_tasks" {
 
 resource "aws_ecr_repository" "app" {
   name                 = "${var.project_name}/${var.app_name}"
-  image_tag_mutability = "MUTABLE"
-
+  image_tag_mutability = "IMMUTABLE"
+  
   image_scanning_configuration {
     scan_on_push = true
   }
@@ -374,7 +374,7 @@ resource "aws_ecs_task_definition" "app" {
   container_definitions = jsonencode([
     {
       name      = var.app_name
-      image     = "${aws_ecr_repository.app.repository_url}:${each.key}-latest"
+      image     = "${aws_ecr_repository.app.repository_url}:${each.key}-${sha}"
       essential = true
 
       portMappings = [{
