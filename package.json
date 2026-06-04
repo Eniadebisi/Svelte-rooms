@@ -1,6 +1,5 @@
 {
   "name": "svelte-room-reservation",
-  "version": "1.0.0",
   "private": true,
   "scripts": {
     "dev": "vite dev",
