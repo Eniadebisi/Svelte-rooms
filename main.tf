@@ -110,6 +110,12 @@ variable "public_subnet_cidrs" {
   description = "CIDR blocks for public subnets (one per AZ)"
 }
 
+variable "image_tag_suffix" {
+  type        = string
+  default     = "init"
+  description = "Image tag suffix used for initial task definition bootstrap; CI/CD overwrites this on deploy"
+}
+
 # ============================================================
 # DATA SOURCES
 # ============================================================
@@ -374,7 +380,7 @@ resource "aws_ecs_task_definition" "app" {
   container_definitions = jsonencode([
     {
       name      = var.app_name
-      image     = "${aws_ecr_repository.app.repository_url}:${each.key}-${sha}"
+      image     = "${aws_ecr_repository.app.repository_url}:${each.key}-${var.image_tag_suffix}"
       essential = true
 
       portMappings = [{
