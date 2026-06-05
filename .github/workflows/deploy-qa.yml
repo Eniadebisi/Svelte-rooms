@@ -5,15 +5,18 @@ on:
     branches: [qa]
 
 jobs:
+  validate:
+    name: Validate
+    uses: ./.github/workflows/_validate.yml
+    secrets: inherit
+
   build:
     name: Build Package
+    needs: [validate]
     uses: ./.github/workflows/_build.yml
+    secrets: inherit
     with:
       environment: qa
-    permissions:
-      contents: write
-
-    secrets: inherit
 
   test:
     name: Test and Validate
@@ -84,6 +87,8 @@ jobs:
     name: Tag for git push
     needs: [deploy]
     runs-on: ubuntu-latest
+    permissions:
+        contents: write
     steps:
       - name: Checkout code
         uses: actions/checkout@v6
@@ -100,7 +105,7 @@ jobs:
           MINOR=$(echo $LAST_TAG | cut -d. -f2)
           PATCH=$(echo $LAST_TAG | cut -d. -f3)
   
-          COMMIT_MSG=$(git log --format=%s -1 HEAD^2)
+          COMMIT_MSG=$(git log --format=%s -1 HEAD^2 2>/dev/null || git log --format=%s -1 HEAD)
 
           if echo "$COMMIT_MSG" | grep -qiE 'breaking|feat!'; then
             MAJOR=$((MAJOR + 1)); MINOR=0; PATCH=0

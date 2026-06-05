@@ -28,7 +28,7 @@ jobs:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ secrets.AWS_REGION }}
-          mask-aws-account-id:   true
+          mask-aws-account-id: true
 
       - name: Login to ECR
         id: login-ecr
@@ -42,20 +42,29 @@ jobs:
           echo "tag=${ENV}-${SHA}" >> $GITHUB_OUTPUT
           echo "env=${ENV}" >> $GITHUB_OUTPUT
 
-      - name: Build and push image
+      - name: Build image
+        run: |
+          REPO="${{ secrets.ECR_REPOSITORY }}"
+          TAG="${{ steps.meta.outputs.tag }}"
+
+          docker build \
+            -t $REPO:$TAG .
+
+      - name: Scan container image with Trivy
+        uses: aquasecurity/trivy-action@0.36.0
+        with:
+          image-ref: ${{ secrets.ECR_REPOSITORY }}:${{ steps.meta.outputs.tag }}
+          scanners: 'vuln,secret'
+          format: table
+          exit-code: "1"
+          ignore-unfixed: true
+          severity: "HIGH,CRITICAL"
+
+      - name: Build image
         env:
           REGISTRY: ${{ steps.login-ecr.outputs.registry }}
         run: |
           REPO="${{ secrets.ECR_REPOSITORY }}"
           TAG="${{ steps.meta.outputs.tag }}"
-          ENV="${{ steps.meta.outputs.env }}"
-
-          echo "Building image"
-
-          docker build \
-            -t $REPO:$TAG -t $REPO:${ENV}-latest .
 
           docker push $REPO:$TAG
-          docker push $REPO:${ENV}-latest
-
-          echo "Built and pushed"

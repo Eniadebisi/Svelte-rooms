@@ -1,0 +1,40 @@
+name: Validate Dev & Promote to QA
+
+on:
+  push:
+    branches: [dev]
+
+jobs:
+  validate:
+    name: Validate
+    uses: ./.github/workflows/_validate.yml
+    secrets: inherit
+
+  promote-qa:
+    name: Promote to QA
+    needs: [validate]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Configure git
+        run: |
+          git config user.name "github-actions"
+          git config user.email "github-actions@github.com"
+
+      - name: Create PR from dev to qa
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh pr create \
+            --base qa \
+            --head dev \
+            --title "Promote dev to QA" \
+            --body "Created by github actions" \
+            || echo "PR exists"

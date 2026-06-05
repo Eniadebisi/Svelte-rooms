@@ -35,16 +35,22 @@ jobs:
         run: |
           git fetch --tags
           VERSION=$(git tag -l 'v*' | sort -V | tail -1)
+          if [ -z "$VERSION" ]; then
+            echo "No semver tags found — cannot resolve QA image to promote"
+            exit 1
+          fi
           REPO="${{ secrets.ECR_REPOSITORY }}"
+
+          QA_SHA=$(git rev-list -n 1 $VERSION | head -c7)
+          QA_TAG="qa-${QA_SHA}"
+
           PROD_TAG="prod-${VERSION}"
 
-          docker pull $REPO:qa-latest
+          docker pull $REPO:$QA_TAG
 
-          docker tag $REPO:qa-latest $REPO:$PROD_TAG
-          docker tag $REPO:qa-latest $REPO:prod-latest
+          docker tag $REPO:$QA_TAG $REPO:$PROD_TAG
 
           docker push $REPO:$PROD_TAG
-          docker push $REPO:prod-latest
 
           echo "image-tag=${PROD_TAG}" >> $GITHUB_OUTPUT
           echo "version=${VERSION}" >> $GITHUB_OUTPUT
