@@ -110,6 +110,36 @@ variable "public_subnet_cidrs" {
   description = "CIDR blocks for public subnets (one per AZ)"
 }
 
+variable "image_tag_suffix" {
+  type        = string
+  default     = "init"
+  description = "Image tag suffix used for initial task definition bootstrap; CI/CD overwrites this on deploy"
+}
+
+variable "db_password" {
+  type        = string
+  sensitive   = true
+  description = "Database password per environment (from GitHub secrets)"
+}
+
+variable "jwt_access_secret" {
+  type        = string
+  sensitive   = true
+  description = "JWT access secret per environment (from GitHub secrets)"
+}
+
+variable "auth_email" {
+  type        = string
+  sensitive   = true
+  description = "Email for auth into (from GitHub secrets)"
+}
+
+variable "auth_email_pw" {
+  type        = string
+  sensitive   = true
+  description = "Email password per environment (from GitHub secrets)"
+}
+
 # ============================================================
 # DATA SOURCES
 # ============================================================
@@ -124,6 +154,33 @@ data "aws_caller_identity" "current" {}
 # Verify it exists first: aws iam get-role --role-name ecsTaskExecutionRole
 data "aws_iam_role" "ecs_task_execution" {
   name = "ecsTaskExecutionRole"
+}
+
+resource "aws_iam_role_policy" "ecs_task_execution_ssm" {
+  name = "${var.project_name}-ecs-task-execution-ssm"
+  role = data.aws_iam_role.ecs_task_execution.id
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect = "Allow"
+        Action = [
+          "ssm:GetParameters",
+          "ssm:GetParameter"
+        ]
+        Resource = [
+          "arn:aws:ssm:${var.aws_region}:${data.aws_caller_identity.current.account_id}:parameter/${var.project_name}/*"
+        ]
+      },
+      {
+        Effect = "Allow"
+        Action = [
+          "kms:Decrypt"
+        ]
+        Resource = "arn:aws:kms:${var.aws_region}:${data.aws_caller_identity.current.account_id}:alias/aws/ssm"
+      }
+    ]
+  })
 }
 
 # ============================================================
@@ -222,7 +279,7 @@ resource "aws_security_group" "ecs_tasks" {
 
 resource "aws_ecr_repository" "app" {
   name                 = "${var.project_name}/${var.app_name}"
-  image_tag_mutability = "MUTABLE"
+  image_tag_mutability = "IMMUTABLE"
 
   image_scanning_configuration {
     scan_on_push = true
@@ -344,7 +401,7 @@ resource "aws_cloudwatch_metric_alarm" "ecs_running_tasks" {
   statistic           = "Average"
   threshold           = 1
   alarm_description   = "ECS ${each.key} running task is 0"
-  treat_missing_data = each.key == "prod" ? "breaching" : "notBreaching"
+  treat_missing_data  = each.key == "prod" ? "breaching" : "notBreaching"
 
   dimensions = {
     ClusterName = aws_ecs_cluster.env[each.key].name
@@ -374,7 +431,7 @@ resource "aws_ecs_task_definition" "app" {
   container_definitions = jsonencode([
     {
       name      = var.app_name
-      image     = "${aws_ecr_repository.app.repository_url}:${each.key}-latest"
+      image     = "${aws_ecr_repository.app.repository_url}:${each.key}-${var.image_tag_suffix}"
       essential = true
 
       portMappings = [{
@@ -385,7 +442,24 @@ resource "aws_ecs_task_definition" "app" {
 
       environment = [
         { name = "ENVIRONMENT", value = each.key },
-        { name = "PORT", value = tostring(var.container_port) }
+        { name = "PORT", value = tostring(var.container_port) },
+        { name = "MODE", value = "production" },
+        { name = "AUTH_EMAIL", value = var.auth_email }
+      ]
+
+      secrets = [
+        {
+          name      = "DB_PASSWORD"
+          valueFrom = aws_ssm_parameter.db_password.arn
+        },
+        {
+          name      = "JWT_ACCESS_SECRET"
+          valueFrom = aws_ssm_parameter.jwt_secret.arn
+        },
+        {
+          name      = "AUTH_EMAIL_PW"
+          valueFrom = aws_ssm_parameter.auth_email_pw.arn
+        }
       ]
 
       logConfiguration = {
@@ -451,6 +525,43 @@ resource "aws_ecs_service" "app" {
   tags = {
     Project     = var.project_name
     Environment = each.key
+  }
+}
+
+# ============================================================
+# SSM PARAMETERS (Secrets at Rest)
+# ============================================================
+
+resource "aws_ssm_parameter" "db_password" {
+  name        = "/${var.project_name}/db-password"
+  description = "Database password"
+  type        = "SecureString"
+  value       = var.db_password
+
+  tags = {
+    Project     = var.project_name
+  }
+}
+
+resource "aws_ssm_parameter" "jwt_secret" {
+  name        = "/${var.project_name}/jwt-access-secret"
+  description = "JWT access secret"
+  type        = "SecureString"
+  value       = var.jwt_access_secret
+
+  tags = {
+    Project     = var.project_name
+  }
+}
+
+resource "aws_ssm_parameter" "auth_email_pw" {
+  name        = "/${var.project_name}/auth-email-pw"
+  description = "Email password"
+  type        = "SecureString"
+  value       = var.auth_email_pw
+
+  tags = {
+    Project     = var.project_name
   }
 }
 
