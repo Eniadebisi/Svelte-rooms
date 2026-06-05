@@ -533,41 +533,35 @@ resource "aws_ecs_service" "app" {
 # ============================================================
 
 resource "aws_ssm_parameter" "db_password" {
-  for_each    = toset(var.environments)
-  name        = "/${var.project_name}/${each.key}/db-password"
-  description = "Database password for ${each.key}"
+  name        = "/${var.project_name}/db-password"
+  description = "Database password"
   type        = "SecureString"
   value       = var.db_password
 
   tags = {
     Project     = var.project_name
-    Environment = each.key
   }
 }
 
 resource "aws_ssm_parameter" "jwt_secret" {
-  for_each    = toset(var.environments)
-  name        = "/${var.project_name}/${each.key}/jwt-access-secret"
-  description = "JWT access secret for ${each.key}"
+  name        = "/${var.project_name}/jwt-access-secret"
+  description = "JWT access secret"
   type        = "SecureString"
   value       = var.jwt_access_secret
 
   tags = {
     Project     = var.project_name
-    Environment = each.key
   }
 }
 
 resource "aws_ssm_parameter" "auth_email_pw" {
-  for_each    = toset(var.environments)
-  name        = "/${var.project_name}/${each.key}/auth-email-pw"
-  description = "Email password for auth in ${each.key}"
+  name        = "/${var.project_name}/auth-email-pw"
+  description = "Email password"
   type        = "SecureString"
   value       = var.auth_email_pw
 
   tags = {
     Project     = var.project_name
-    Environment = each.key
   }
 }
 
