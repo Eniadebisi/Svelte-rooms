@@ -96,6 +96,16 @@ SvelteKit Route (+page.server.ts)
 | Container Registry | AWS ECR                 | -       | Private Docker image registry         |
 | IaC                | Terraform               | 1.5+    | AWS infrastructure as code            |
 
+## Security/Vulnerability Scanning
+
+| Pillar | Tool | File | Status |
+|--------|------|------|--------|
+| SAST (app code) | Semgrep | `_validate.yml` | ✅ |
+| Image scan: secrets + vuln, pre-push | Trivy | `_build.yml` | ✅ (fixed) |
+| IaC policy/compliance | Trivy config | `_validate.yml` | ✅ |
+| Secrets scan | gitleaks | `_validate.yml` | ✅ |
+| Dependency/SCA | npm audit | `_validate.yml` | ✅ |
+| Secrets at rest | SSM | `_deploy.yml` + Terraform | pending |
 ---
 
 ## CI/CD Pipeline
