@@ -1,112 +1,224 @@
-# Svelte Rooms Reservations
+# Svelte Rooms
 
-A full-stack room reservation system built with **Svelte + SvelteKit**, **Prisma 7**, and **MariaDB**. Handles user authentication, role-based access control, space management, recurring reservations, and admin operations.
-
-## Table of Contents
-
-- [Features](#features)
-- [Architecture](#architecture)
-- [Tech Stack](#tech-stack)
-- [CI/CD Pipeline](#cicd-pipeline)
-- [Environment Variables](#environment-variables)
-- [Local Development](#local-development)
-- [API Surface](#api-surface)
-- [Data Models](#data-models)
-- [Key Patterns](#key-patterns)
-
----
-
-## Features
-
-### Core Functionality
-
-- **Authentication** - JWT-based user sessions with bcrypt password hashing
-- **Role-Based Access Control** - Five roles (Owner, Admin, User, Guest, Restricted) with permission checks
-- **Space Management** - CRUD operations for rooms/spaces with locations
-- **Reservations** - Booking system with date/time selection and recurring patterns (via rrule)
-- **Admin Operations** - User role assignment, space management, mass reservation viewing/deletion
-- **Email Notifications** - Nodemailer integration for confirmations and updates
-
-### Technical Capabilities
-
-- Type-safe database access via Prisma 7 (ESM client)
-- Server-side rendering with SvelteKit
-- Responsive UI with Bootstrap 5
-- Connection pooling optimized for shared hosting (connectionLimit: 1)
-- Sass preprocessing with modern API
-- Test coverage for authorization logic (Vitest)
-
----
+**Svelte Rooms** is a full-stack room reservation system that demonstrates enterprise-grade patterns in authentication, authorization, database design, and security scanning within a containerized AWS deployment. The project showcases a production-ready CI/CD pipeline with comprehensive security gates and infrastructure-as-code best practices.
 
 ## Architecture
 
-### Authentication & Authorization
+### Project Overview
 
-- **Session Flow:** Login form → JWT token stored in cookie → Checked via `src/hooks.server.ts` on protected routes
-- **Permission System:** `hasPermission(user.role, requiredRole)` in `src/lib/permissions/auth.ts`
-- **Protected Routes:** All routes under `src/routes/(authenticated)/` require valid JWT
-- **Admin-Only Routes:** Routes under `src/routes/(authenticated)/(admin)/` check for Admin/Owner role
+* **Security-first CI/CD:** Every change is gate-checked for code vulnerabilities, image security, and infrastructure compliance.
+* **Build-once promotion:** A single Docker image flows through dev → qa → prod without rebuilds.
+* **Infrastructure-as-code:** Terraform-managed AWS resources with manual control over production changes.
+* **Role-based access control:** Five-tier permission system with granular authorization checks.
+* **Encrypted secrets management:** No plaintext credentials in logs, images, or code.
 
-### API Route Pattern
+### Design Principles
 
+| Principle | Implementation |
+|---|---|
+| **Fail fast** | Security gates run early (SAST, Trivy pre-push); failures block the pipeline. |
+| **Immutability** | Docker images tagged by commit SHA; ECR immutability enabled. |
+| **Single source of truth** | Git commits → images → Terraform state; no manual image tags. |
+| **Audit trail** | Intentional decisions logged (`.trivyignore`); all changes reviewable in GitHub. |
+| **Least privilege** | Five-tier RBAC; IAM roles grant the minimum needed permissions. |
+| **Manual control on risk** | Terraform apply requires a human operator; prod changes require approval. |
+
+## Architecture & Design
+
+### High-Level Overview
+
+```text
+┌─────────────────────────────────────────────────────────────────┐
+│                          GitHub & CI/CD                         │
+│                         (GitHub Actions)                        │
+│  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐           │
+│  │     SAST     │  │  Image Scan  │  │  IaC Policy  │           │
+│  │  (Semgrep)   │  │   (Trivy)    │  │   (Trivy)    │           │
+│  └──────────────┘  └──────────────┘  └──────────────┘           │
+│        │                  │                 │                   │
+│        └──────────────────┴─────────────────┘                   │
+│                           │                                     │
+│                   ┌─────────────────┐                           │
+│                   │   Build & Push  │                           │
+│                   │  (Docker/ECR)   │                           │
+│                   └─────────────────┘                           │
+└─────────────────────────────────────────────────────────────────┘
+                            │
+                ┌───────────┴───────────┐
+                │                       │
+        ┌───────────────┐       ┌───────────────┐
+        │ ECR Registry  │       │  State Store  │
+        │  (immutable)  │       │  (S3 + lock)  │
+        └───────────────┘       └───────────────┘
+                │                       │
+        ┌───────┴─────────┐             │
+        │                 │             │
+   ┌─────────┐    ┌──────────────┐      │
+   │  Deploy │    │  Terraform   │◄─────┘
+   │  (ECS)  │    │    (IaC)     │
+   └────┬────┘    └──────────────┘
+        │
+    ┌───┴──────────────────┬──────────┐
+    │                      │          │
+┌──────────┐      ┌──────────────┐  ┌───────┐
+│   Dev    │      │      QA      │  │ Prod  │
+│ Cluster  │      │   Cluster    │  │Cluster│
+└──────────┘      └──────────────┘  └───────┘
+(FARGATE_SPOT)     (FARGATE_SPOT)   (FARGATE)
 ```
-src/routes/(authenticated)/(admin)/api/{action}/+server.ts
-├── POST handler accepts request
-├── Validates user permissions
-├── Calls database model (e.g., user.model.js, rooms.model.js)
-└── Returns JSON response
+
+### Application Architecture
+
+**Svelte Rooms** follows a modern full-stack pattern:
+
+```text
+┌─────────────────────────────────────────────────────────────┐
+│                 Frontend (Svelte/SvelteKit)                 │
+│  ┌──────────────────────────────────────────────────────┐   │
+│  │ Pages (authentication, reservations, admin panel)    │   │
+│  │ Forms, real-time updates, Bootstrap 5 UI             │   │
+│  └──────────────────────────────────────────────────────┘   │
+└─────────────────────────────────────────────────────────────┘
+                            │
+                  (Server-side rendering)
+                            │
+┌─────────────────────────────────────────────────────────────┐
+│                 Backend (SvelteKit Server)                  │
+│  ┌──────────────────────────────────────────────────────┐   │
+│  │ Hooks (JWT validation, session checks)               │   │
+│  │ API routes (reservations, users, spaces)             │   │
+│  │ Authentication (bcrypt, JWT, role-based access)      │   │
+│  │ Email notifications (Nodemailer)                     │   │
+│  └──────────────────────────────────────────────────────┘   │
+└─────────────────────────────────────────────────────────────┘
+                            │
+                       (Prisma ORM)
+                            │
+┌─────────────────────────────────────────────────────────────┐
+│                     Database (MariaDB)                      │
+│  ┌──────────────────────────────────────────────────────┐   │
+│  │ Users, Spaces, Reservations, Roles                   │   │
+│  │ Connection pooling (optimized for shared hosting)    │   │
+│  └──────────────────────────────────────────────────────┘   │
+└─────────────────────────────────────────────────────────────┘
 ```
 
-### Database Query Organization
+### Authentication & Authorization Flow
 
-- **`src/lib/server/user.model.js`** - User queries (findUser, createUser, updateRole)
-- **`src/lib/server/rooms.model.js`** - Room queries (findRooms, createRoom, deleteRoom)
-- **Prisma Client** - Instantiated in `src/lib/server/db.ts` with MariaDB adapter
+1. **Login:** User submits credentials → bcrypt verification → JWT token issued.
+2. **Session:** JWT stored in HTTP-only cookie (SvelteKit `cookies`).
+3. **Protection:** `hooks.server.ts` validates JWT on every request.
+4. **Authorization:** Role-based access control (RBAC) checked per route/API.
 
-### Data Flow
+**Five-tier role hierarchy:**
+* **Owner:** Full system access (user management, space management, all reservations).
+* **Admin:** User role assignment, space CRUD, view/delete all reservations.
+* **User:** Create/view/delete own reservations.
+* **Guest:** View own reservations (read-only).
+* **Restricted:** No access.
 
-```
-SvelteKit Route (+page.server.ts)
-  → Server Load Function or Form Action
-    → Calls Model (user.model.js, rooms.model.js)
-      → Uses PrismaClient
-        → Returns data/result to component
-```
+> **Note:** See `src/lib/permissions/auth.ts` for enforcement logic.
 
----
+### Data Model
 
-## Tech Stack
+**Core entities:**
+* **User:** Authentication identity, role, email, password hash.
+* **Space:** Rooms/areas available for reservation.
+* **Reservation:** Booking entry (date, time, space, user, recurring pattern via rrule).
+* **Role:** RBAC definition (Owner, Admin, User, Guest, Restricted).
 
-| Layer              | Technology              | Version | Notes                                 |
-| ------------------ | ----------------------- | ------- | ------------------------------------- |
-| Frontend Framework | Svelte                  | 4.2.7   | Reactive components, minimal overhead |
-| Meta Framework     | SvelteKit               | 2.50.1  | SSR, routing, server routes           |
-| Build Tool         | Vite                    | 5.4.6   | ESM-based, zero-config                |
-| ORM                | Prisma                  | 7.3.0   | ESM client (90% smaller bundle)       |
-| DB Adapter         | @prisma/adapter-mariadb | 7.3.0   | Native MariaDB connection pooling     |
-| DB Driver          | mysql2                  | 3.16.1  | MySQL protocol implementation         |
-| Authentication     | jsonwebtoken + bcrypt   | 6.0.0   | JWT sessions, password hashing        |
-| Email              | Nodemailer              | 7.0.12  | SMTP integration                      |
-| Utilities          | Day.js + rrule          | -       | Date handling, recurring patterns     |
-| Styling            | Bootstrap 5 + SCSS      | 5.3.3   | Component library, modern CSS API     |
-| Testing            | Vitest                  | 4.0.18  | Fast unit tests, ESM-native           |
-| Type Safety        | TypeScript              | 5.0.0   | Full codebase type checking           |
-| Node               | -                       | 2.x    | Required version                      |
-| Deployment         | AWS ECS Fargate         | -       | Containerized, serverless             |
-| Container Registry | AWS ECR                 | -       | Private Docker image registry         |
-| IaC                | Terraform               | 1.5+    | AWS infrastructure as code            |
+Prisma schema enforces relationships and constraints. MariaDB handles persistence and connection pooling.
 
-## Security/Vulnerability Scanning
+## Technologies & Stack
 
-| Pillar | Tool | File | Status |
-|--------|------|------|--------|
-| SAST (app code) | Semgrep | `_validate.yml` | ✅ |
-| Image scan: secrets + vuln, pre-push | Trivy | `_build.yml` | ✅ (fixed) |
-| IaC policy/compliance | Trivy config | `_validate.yml` | ✅ |
-| Secrets scan | gitleaks | `_validate.yml` | ✅ |
-| Dependency/SCA | npm audit | `_validate.yml` | ✅ |
-| Secrets at rest | SSM | `_deploy.yml` + Terraform | pending |
----
+### Frontend
+
+| Component | Technology | Version | Purpose |
+|---|---|---|---|
+| Framework | Svelte | 4.2.7 | Reactive components, minimal runtime |
+| Meta-framework | SvelteKit | 2.50.1 | SSR, routing, form handling |
+| Build tool | Vite | 5.4.6 | ESM-native bundling |
+| Styling | Bootstrap 5 + SCSS | 5.3.3 | Component library + custom styles |
+| Type safety | TypeScript | 5.0.0 | Full static typing |
+
+### Backend
+
+| Component | Technology | Version | Purpose |
+|---|---|---|---|
+| Runtime | Node.js | 20.x | JavaScript server environment |
+| ORM | Prisma | 7.3.0 | Type-safe database access, ESM client |
+| DB adapter | @prisma/adapter-mariadb | 7.3.0 | MariaDB native connection pooling |
+| DB driver | mysql2 | 3.16.1 | MySQL protocol implementation |
+| Auth | jsonwebtoken + bcrypt | 6.0.0 | JWT sessions, password hashing |
+| Email | Nodemailer | 7.0.12 | SMTP-based email notifications |
+| Utilities | Day.js + rrule | N/A | Date handling, recurring patterns |
+| Testing | Vitest | 4.0.18 | Unit tests, ESM-native |
+
+### Infrastructure & Deployment
+
+| Component | Technology | Purpose |
+|---|---|---|
+| Container orchestration | AWS ECS Fargate | Serverless container management |
+| Container registry | AWS ECR | Docker image repository with immutability |
+| Container image | Docker (node:20-alpine) | Multi-stage build, minimal footprint |
+| CI/CD | GitHub Actions | Workflow orchestration, reusable workflows |
+| Infrastructure-as-code | Terraform 1.10.0 | AWS resource provisioning |
+| State management | S3 + lockfile | Terraform state backend with locking |
+| Secrets at rest | AWS SSM Parameter Store | Encrypted secure string storage |
+| Logging | AWS CloudWatch | Application and infrastructure logs |
+| Monitoring | CloudWatch alarms | Task count and service health checks |
+| Load balancer | (Fargate public IP) | Direct public IP for testing (not production-grade) |
+
+### Security Tooling
+
+| Tool | Purpose | Stage |
+|---|---|---|
+| Semgrep | SAST — scan application code for vulnerabilities | Pre-build |
+| Trivy | Image scanning (secrets + CVE), IaC compliance | Pre-push + scheduled |
+| Gitleaks | Secrets scanning (hardcoded credentials) | Pre-build + scheduled |
+| npm audit | Dependency vulnerability scanning | Pre-build |
+| Docker BuildKit | Secrets handling in build (no plaintext in image) | Build |
+
+## Security Implementation
+
+### Security Architecture
+
+#### 1. Secrets Management (At Rest)
+* Database credentials, JWT secret, and email passwords are stored in **AWS SSM Parameter Store** as `SecureString` type.
+* Encryption via AWS-managed KMS key (`aws/ssm`, no extra cost).
+* Task execution role is granted `ssm:GetParameters` and `kms:Decrypt` permissions.
+* ECS task fetches credentials at startup and injects them as container environment variables (decrypted in memory only).
+
+#### 2. Image Security (Pre-Push)
+* Build image locally → **Trivy scans** (vulnerabilities + secrets) → if clean, push to ECR → if fails, pipeline stops.
+* Trivy is configured to fail on HIGH/CRITICAL severity (exit-code: 1).
+* `.trivyignore` documents intentional findings (e.g., unrestricted egress for Fargate networking).
+
+#### 3. Code Quality & Vulnerability Detection (SAST)
+* **Semgrep** (`p/default` ruleset) scans JavaScript/TypeScript for XSS, SQL injection, and insecure patterns.
+* Runs in `_validate.yml` as a parallel job (prevents pipeline bottlenecks).
+* Fails pipeline on high-confidence security findings.
+
+#### 4. Infrastructure Security (IaC Policy)
+* **Trivy config scan** validates Terraform against CIS benchmarks.
+* Checks: IAM least-privilege, security groups, encryption, resource limits.
+* Runs in `_validate.yml` before `terraform init`.
+* *Niche detail: Can be escalated to **Checkov** for stronger, customized policy packs.*
+* **Result:** Misconfigurations caught before apply.
+
+#### 5. Secrets Scanning
+* **Gitleaks** scans commit history for patterns (AWS keys, private keys, database passwords).
+* Runs on every push and via weekly scheduled scans.
+* Results uploaded to GitHub's Security tab (if Advanced Security is enabled).
+* **Result:** Accidental commits blocked before reaching the main branch.
+
+#### 6. Application Authentication
+* JWT-based session tokens leverage HTTP-only cookies and the secure flag.
+* bcrypt password hashing (cost factor 10).
+* Role-based access control (5-tier hierarchy).
+* `hooks.server.ts` validates JWT on every request.
+* Protected routes (`(authenticated)`) require a valid token.
+* Admin routes (`(authenticated)/(admin)`) require Owner/Admin roles.
 
 ## CI/CD Pipeline
 
@@ -114,21 +226,21 @@ This project uses a reusable multi-environment GitHub Actions pipeline deploying
 
 ### Branching Strategy
 
-```
+```text
 feature/* ──► dev ──► qa ──► main
                │       │       │
-             dev     qa     prod
-            cluster cluster cluster
+             dev      qa      prod
+           cluster  cluster cluster
 ```
 
-- **`feature/*`** — cut from `dev`, opened as PR back to `dev`
-- **`dev`** — auto-deploys to dev ECS cluster on every merge
-- **`qa`** — auto-deploys to qa ECS cluster on every merge
-- **`main`** — deploys to prod ECS cluster after required reviewer approval
+* **`feature/*`** — Cut from `dev`, opened as PR back to `dev`.
+* **`dev`** — Auto-deploys to dev ECS cluster on every merge.
+* **`qa`** — Auto-deploys to qa ECS cluster on every merge.
+* **`main`** — Deploys to prod ECS cluster after required reviewer approval.
 
 ### Pipeline Flow
 
-```
+```text
 1. Developer cuts feature branch off dev
         │
 2. PR opened → dev (code review)
@@ -157,181 +269,126 @@ feature/* ──► dev ──► qa ──► main
    - Deploys to prod — zero-downtime (new task starts before old stops)
 ```
 
-### Rollback
+### Rollback Strategy
 
 Manual trigger via `rollback.yml` in the Actions tab:
-- Select environment (dev / qa / prod)
-- Optionally specify a task definition revision number
-- Leave blank to automatically roll back to revision N-1
-- ECS circuit breaker also auto-rolls back on failed deployments independently
+1. Select environment (dev / qa / prod).
+2. Optionally specify a task definition revision number.
+3. Leave blank to automatically roll back to revision N-1.
+4. ECS circuit breaker independently handles auto-rollback on failed deployments.
 
-### Workflow Files
+### CI/CD Stage Breakdown
 
-| File | Trigger | Purpose |
-|------|---------|---------|
-| `build.yml` | Push to `dev` | Build Docker image, push to ECR |
-| `_deploy.yml` | Called by others | Reusable deploy template |
-| `deploy-dev.yml` | Push to `dev` | Deploy to dev ECS cluster |
-| `deploy-qa.yml` | Push to `qa` | Deploy to qa ECS cluster |
-| `deploy-prod.yml` | Push to `main` | Deploy to prod with approval gate |
-| `rollback.yml` | Manual | Roll back any environment |
-
-### AWS Infrastructure (Terraform)
-
-Managed via `main.tf` at the repo root. Provisions:
-
-- VPC with public subnets (no NAT Gateway — cost optimized)
-- ECR repository with lifecycle policies (auto-expires old images)
-- ECS clusters per environment (dev/qa/prod)
-- ECS Fargate Spot for dev/qa (~70% cheaper), standard Fargate for prod
-- CloudWatch log groups and crash alarms per environment
-- ECS services with deployment circuit breakers
-
-**To provision infrastructure:**
-```bash
-terraform init
-terraform plan
-terraform apply
+```text
+Dev Branch Push
+    ↓
+┌─────────────────────────────────────┐
+│ 1. VALIDATE (runs on every push)    │
+├─────────────────────────────────────┤
+│ ✓ Lint & format (Prettier, ESLint)  │
+│ ✓ SAST (Semgrep code analysis)      │
+│ ✓ Secrets scan (Gitleaks)           │
+│ ✓ Dependency audit (npm audit)      │
+│ ✓ Terraform validate & format check │
+│ ✓ IaC compliance (Trivy config)     │
+│ ✓ Prisma schema validation          │
+└─────────────────────────────────────┘
+    ↓ (fail on high severity findings)
+┌─────────────────────────────────────┐
+│ 2. BUILD (Docker image)             │
+├─────────────────────────────────────┤
+│ ✓ Multi-stage build (node:20-alpine)│
+│ ✓ Image tag: env-{commit_sha:7}     │
+│ ✓ Push to ECR (immutable tags)      │
+└─────────────────────────────────────┘
+    ↓
+┌─────────────────────────────────────┐
+│ 3. SCAN (Trivy pre-push)            │
+├─────────────────────────────────────┤
+│ ✓ Container image (vuln + secret)   │
+│ ✓ Exit on CRITICAL/HIGH             │
+└─────────────────────────────────────┘
+    ↓ (only clean images in ECR)
+┌─────────────────────────────────────┐
+│ 4. DEPLOY DEV                       │
+├─────────────────────────────────────┤
+│ ✓ Update ECS task def (new image)   │
+│ ✓ Deploy to dev cluster (Fargate)   │
+│ ✓ Health check (wait for stability) │
+└─────────────────────────────────────┘
+    ↓
+┌─────────────────────────────────────┐
+│ 5. PROMOTE QA (GitHub PR)           │
+├─────────────────────────────────────┤
+│ ✓ Auto-create PR: dev → qa branch   │
+│ ✓ Await manual approval             │
+└─────────────────────────────────────┘
+    ↓ (manual merge in GitHub)
+┌─────────────────────────────────────┐
+│ 6. VALIDATE & BUILD (qa push)       │
+├─────────────────────────────────────┤
+│ ✓ Same as step 1 (re-validate)      │
+│ ✓ Build image (same SHA as dev)     │
+└─────────────────────────────────────┘
+    ↓
+┌─────────────────────────────────────┐
+│ 7. TEST (QA Cluster)                │
+├─────────────────────────────────────┤
+│ ✓ Run unit tests                    │
+│ ✓ Container health check (HTTP)     │
+│ ✓ Deploy to qa cluster              │
+└─────────────────────────────────────┘
+    ↓ (after all tests pass)
+┌─────────────────────────────────────┐
+│ 8. TAG (Git semantic version)       │
+├─────────────────────────────────────┤
+│ ✓ Commit message → semver bump      │
+│   - breaking/feat! → major          │
+│   - feat → minor                    │
+│   - else → patch                    │
+│ ✓ Tag: v{major}.{minor}.{patch}     │
+│ ✓ Push to main (implicit)           │
+└─────────────────────────────────────┘
+    ↓ (tag push triggers prod workflow)
+┌─────────────────────────────────────┐
+│ 9. PROMOTE PROD (GitHub PR)         │
+├─────────────────────────────────────┤
+│ ✓ Auto-create PR: qa → main         │
+│ ✓ Await manual approval             │
+└─────────────────────────────────────┘
+    ↓ (manual merge in GitHub)
+┌─────────────────────────────────────┐
+│ 10. RETAG & DEPLOY PROD             │
+├─────────────────────────────────────┤
+│ ✓ Pull qa image (same SHA)          │
+│ ✓ Retag as prod-{version}           │
+│ ✓ Push to ECR                       │
+│ ✓ Deploy to prod cluster (FARGATE)  │
+│ ✓ Create GitHub Release             │
+└─────────────────────────────────────┘
 ```
 
-**Key Terraform considerations:**
-- No IAM role creation (restricted permissions) — uses existing `ecsTaskExecutionRole`
-- S3 backend for remote state (`svelte-rooms-tf-state` bucket)
-- `use_lockfile = false` — avoids `s3:DeleteObject` permission requirement
-- Resources already existing in AWS must be imported: `terraform import <resource> <id>`
+### Key Pipeline Decisions
 
----
+| Decision | Rationale |
+|---|---|
+| **Build once** | Same image moves from dev → qa → prod; no re-builds per env. Reduces risk of configuration drift. |
+| **SHA-based tags** | `dev-{sha:7}`, `qa-{sha:7}`, `prod-v1.2.3` — guarantees uniqueness, easy to trace back to commits. |
+| **No `-latest` tag** | Prevents accidental overwrites; immutability enforced natively by ECR. |
+| **Manual terraform apply** | Full control retained over infrastructure changes; CI only runs `plan` and posts output. |
+| **Pre-push image scan** | Trivy runs before `docker push`; ECR never contains vulnerable images. |
+| **Parallel SAST job** | Semgrep runs in parallel with other validation steps; doesn't block independent checks. |
+| **Semver on success only** | Git tags created only after full test suite passes; avoids tagging broken commits. |
+| **FARGATE_SPOT for non-prod** | Cost optimization; dev/qa can handle interruptions; prod uses standard FARGATE. |
+| **Deployment circuit breaker** | ECS auto-rollback if new version fails health checks (default 100 failed tasks = rollback). |
 
-## Environment Variables
+## Standards & Compliance
 
-### SvelteKit Variable Types
-
-SvelteKit has two categories of private env vars — understanding this is critical for the Docker build:
-
-| Type | Import | Resolved | Where to set |
-|------|--------|----------|--------------|
-| `$env/static/private` | Build time | During `npm run build` | GitHub Actions secrets (build args) |
-| `$env/dynamic/private` | Runtime | When container starts | ECS task definition |
-
-### Build-Time Variables (GitHub Actions Secrets)
-
-These must exist as GitHub repository secrets AND be passed as Docker build args. The build fails without them because SvelteKit resolves them statically during `npm run build`.
-
-| Secret | Purpose |
-|--------|---------|
-| `AWS_ACCESS_KEY_ID` | AWS authentication |
-| `AWS_SECRET_ACCESS_KEY` | AWS authentication |
-| `AWS_REGION` | AWS region (us-east-1) |
-| `ECR_REPOSITORY` | Full ECR URL (from `terraform output ecr_repository_url`) |
-| `JWT_ACCESS_SECRET` | JWT signing secret |
-| `CONTACT_EMAIL` | Contact email for notifications |
-
-> To find all build-time variables in the codebase:
-> ```bash
-> grep -r "from \"\$env/static/private\"" src/ | grep -o '"[A-Z_]*"' | sort -u
-> ```
-
-### Runtime Variables (ECS Task Definition)
-
-These are injected into the container at runtime via the ECS task definition `environment` block. They do not need to be in GitHub secrets.
-
-| Variable | Purpose |
-|----------|---------|
-| `DATABASE_URL` | MariaDB connection string |
-| `SMTP_HOST` | Email server host |
-| `SMTP_PORT` | Email server port |
-| `SMTP_USER` | Email credentials |
-| `SMTP_PASS` | Email credentials |
-
-> To find all runtime variables:
-> ```bash
-> grep -r "from \"\$env/dynamic/private\"" src/ | grep -o '"[A-Z_]*"' | sort -u
-> ```
-
-### Local Development
-
-Create a `.env` file at the repo root (never commit this):
-```env
-JWT_ACCESS_SECRET=your-secret
-CONTACT_EMAIL=your@email.com
-DATABASE_URL=mysql://user:pass@localhost:3306/svelte_rooms
-```
-
----
-
-## Local Development
-
-### Prerequisites
-
-- Node.js 22.x
-- Docker Desktop (for local container testing)
-- MariaDB or MySQL instance
-
-### Setup
-
-```bash
-# Install dependencies
-npm install
-
-# Generate Prisma client
-npx prisma generate
-
-# Run database migrations
-npx prisma migrate dev
-
-# Start dev server
-npm run dev
-```
-
-### Test Docker build locally before pushing
-
-Always test the Docker build locally before pushing to avoid waiting for GitHub Actions to catch errors:
-
-```bash
-docker build \
-  --build-arg JWT_ACCESS_SECRET=test-secret \
-  --build-arg CONTACT_EMAIL=test@test.com \
-  -t svelte-rooms-test .
-```
-
-If this passes locally it will pass in GitHub Actions.
-
----
-
-## API Surface
-
-### Server Routes (API Endpoints)
-
-**Admin Routes** - All under `src/routes/(authenticated)/(admin)/api/`
-
-| Endpoint | Method | Purpose |
-|----------|--------|---------|
-| `/api/newReservation` | POST | Create reservation |
-| `/api/deleteReservation` | POST | Delete reservation |
-| `/api/reservationData` | POST | Fetch reservation details |
-| `/api/deleteRoom` | POST | Delete space/room |
-| `/api/editUserRole` | POST | Update user role |
-
-All routes validate user permissions before executing.
-
-See `prisma/schema.prisma` for full schema.
-
----
-
-## User Roles & Permissions
-
-| Role | User Mgmt | Space Mgmt | Reservations | Admin Access |
-|------|-----------|------------|--------------|--------------|
-| Owner | ✅ Full | ✅ Full | ✅ Full | ✅ Yes |
-| Admin | ✅ Assign roles | ✅ CRUD | ✅ View all, delete | ✅ Yes |
-| User | ❌ | ❌ | ✅ Own only | ❌ |
-| Guest | ❌ | ❌ | ✅ View own | ❌ |
-| Restricted | No access | | | |
-
-Check `src/lib/permissions/auth.ts` for enforcement.
-
----
-
-## License
-
-MIT License. See LICENSE file for details.
+| Standard | Area | Implementation |
+|---|---|---|
+| **OWASP Top 10** | Web Application Security | Input validation, CSRF protection (SvelteKit), secure session handling |
+| **NIST Cybersecurity Framework** | Risk Management | Risk-based security gates (SAST → Image Scan → Deploy) |
+| **CIS Controls** | Infrastructure Security | Trivy scans against CIS benchmarks (IAM, encryption, network segmentation) |
+| **AWS Well-Architected Framework** | Cloud Architecture | Least privilege (IAM), encryption (KMS), separation of concerns (dev/qa/prod) |
+| **12 Factor App** | Application Design | Secrets pulled from environment, stateless containers, logging routed to stdout |
+| **Container Security Best Practices** | Image Security | Alpine base image, multi-stage builds, secrets excluded from image layers, immutable tags |
