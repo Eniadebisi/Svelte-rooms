@@ -1,6 +1,7 @@
 # Svelte Rooms
 
 **Svelte Rooms** is a full-stack room reservation system that demonstrates enterprise-grade patterns in authentication, authorization, database design, and security scanning within a containerized AWS deployment. The project showcases a production-ready CI/CD pipeline with comprehensive security gates and infrastructure-as-code best practices.
+** Note that AI was used extensively for commenting, readmes and documentation to improve reusability and understanding of code.
 
 ## Architecture
 
