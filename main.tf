@@ -550,7 +550,7 @@ resource "aws_ssm_parameter" "jwt_secret" {
   value       = var.jwt_access_secret
 
   tags = {
-    Project     = var.project_name
+    Project = var.project_name
   }
 }
 

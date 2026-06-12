@@ -9,6 +9,9 @@ jobs:
   retag:
     name: Retag QA image for Prod
     runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
     outputs:
       image-tag: ${{ steps.tag.outputs.image-tag }}
       version: ${{ steps.tag.outputs.version }}

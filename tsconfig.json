@@ -12,5 +12,5 @@
     "strict": true,
     "skipLibCheck": true
   },
-  "include": ["types/**/*.d.ts", "prisma.config.ts", "src"]
+  "include": ["types/**/*.d.ts", "prisma.config.ts", "app"]
 }

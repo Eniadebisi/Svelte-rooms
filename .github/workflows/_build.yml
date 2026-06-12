@@ -12,6 +12,10 @@ on:
         description: "ECR image tag built and pushed"
         value: ${{ jobs.build.outputs.image-tag }}
 
+permissions:
+  id-token: write
+  contents: read
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -40,9 +44,8 @@ jobs:
           SHA=$(echo $GITHUB_SHA | head -c7)
           ENV="${{ inputs.environment }}"
           echo "tag=${ENV}-${SHA}" >> $GITHUB_OUTPUT
-          echo "env=${ENV}" >> $GITHUB_OUTPUT
 
-      - name: Build image
+      - name: Build Docker image
         run: |
           REPO="${{ secrets.ECR_REPOSITORY }}"
           TAG="${{ steps.meta.outputs.tag }}"
@@ -50,7 +53,7 @@ jobs:
           docker build \
             -t $REPO:$TAG .
 
-      - name: Scan container image with Trivy
+      - name: Trivy image scan (blocking)
         uses: aquasecurity/trivy-action@v0.36.0
         with:
           image-ref: ${{ secrets.ECR_REPOSITORY }}:${{ steps.meta.outputs.tag }}
@@ -60,7 +63,7 @@ jobs:
           ignore-unfixed: true
           severity: "HIGH,CRITICAL"
 
-      - name: Build image
+      - name: Push Docker image to ECR
         env:
           REGISTRY: ${{ steps.login-ecr.outputs.registry }}
         run: |

@@ -8,6 +8,11 @@ on:
       - '.github/workflows/terraform-plan.yml'
   workflow_dispatch:
 
+permissions:
+  id-token: write
+  contents: read
+  pull-requests: write
+  
 jobs:
   plan:
     runs-on: ubuntu-latest
@@ -39,26 +44,26 @@ jobs:
           echo "::add-mask::$JWT"
           echo "::add-mask::$EMAIL_PW"
 
-          echo "TF_VAR_db_password=$DB_PW"             >> $GITHUB_ENV
-          echo "TF_VAR_jwt_access_secret=$JWT"         >> $GITHUB_ENV
-          echo "TF_VAR_auth_email=$EMAIL"              >> $GITHUB_ENV
-          echo "TF_VAR_auth_email_pw=$EMAIL_PW"        >> $GITHUB_ENV
+          echo "TF_VAR_db_password=$DB_PW"         >> $GITHUB_ENV
+          echo "TF_VAR_jwt_access_secret=$JWT"     >> $GITHUB_ENV
+          echo "TF_VAR_auth_email=$EMAIL"          >> $GITHUB_ENV
+          echo "TF_VAR_auth_email_pw=$EMAIL_PW"    >> $GITHUB_ENV
 
       - name: Terraform fmt check
         run: terraform fmt -recursive -check
         continue-on-error: true
 
       - name: Terraform init
-        run: terraform init
+        run: terraform init -chdir=terraform/global
 
       - name: Terraform validate
-        run: terraform validate
+        run: terraform validate -chdir=terraform/global
 
       - name: Terraform plan
         id: plan
         run: |
           set -o pipefail
-          terraform plan -no-color -out=tfplan 2>&1 | tee plan-output.txt
+          terraform plan -no-color -out=tfplan -chdir=terraform/global 2>&1 | tee plan-output.txt
 
       - name: Comment plan on PR
         if: github.event_name == 'pull_request'
