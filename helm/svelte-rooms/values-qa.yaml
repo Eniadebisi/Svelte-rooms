@@ -1,0 +1,17 @@
+replicaCount: 1
+
+env:
+  NODE_ENV: "qa"
+  MODE: "qa"
+
+resources:
+  requests:
+    cpu: "100m"
+    memory: "256Mi"
+  limits:
+    cpu: "500m"
+    memory: "512Mi"
+
+autoscaling:
+  enabled: false
+

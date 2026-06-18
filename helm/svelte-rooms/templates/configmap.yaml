@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: svelte-rooms-config
+  labels:
+    {{- include "svelte-rooms.labels" . | nindent 4 }}
+data:
+  NODE_ENV: {{ .Values.env.NODE_ENV | quote }}
+  PORT: {{ .Values.env.PORT | quote }}
+  MODE: {{ .Values.env.MODE | quote }}
+  DB_PORT: {{ .Values.env.DB_PORT | quote }}
+  DB_NAME: {{ .Values.env.DB_NAME | quote }}
+  DB_USER: {{ .Values.env.DB_USER | quote }}
+  OTEL_EXPORTER_OTLP_ENDPOINT: {{ .Values.env.OTEL_EXPORTER_OTLP_ENDPOINT | quote }}
+  OTEL_SERVICE_NAME: {{ .Values.env.OTEL_SERVICE_NAME | quote }}
