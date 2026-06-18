@@ -24,50 +24,79 @@ jobs:
         working-directory: app
         run: npm ci
 
-      - name: Audit npm dependencies
-        run: npm audit --audit-level=high
+      - name: Run unit tests
+        working-directory: app
+        run: npm test
+
+      - name: Trivy filesystem scan (blocking)
+        uses: aquasecurity/trivy-action@v0.36.0
+        with:
+          scan-type: fs
+          scan-ref: "."
+          scanners: "vuln,secret,misconfig"
+          severity: HIGH,CRITICAL
+          exit-code: "1"
+          ignore-unfixed: true
 
       - name: Validate Prisma schema
+        working-directory: app
         run: npx prisma validate
-
-      - name: Scan secrets with Gitleaks
-        uses: gitleaks/gitleaks-action@v2
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v4.0.1
         with:
           terraform_version: "1.10.0"
 
-      - name: Terraform init
-        run: terraform init -backend=false
-
-      - name: Terraform validate
-        run: terraform validate
-
       - name: Terraform fmt check
-        run: terraform fmt -recursive -check
+        run: terraform fmt -recursive -check -write=false
+        working-directory: terraform
         continue-on-error: true
 
-      - name: Scan Terraform config with Trivy
+      - name: Terraform init (global)
+        run: terraform init -backend=false -chdir=terraform/global
+
+      - name: Terraform validate (global)
+        run: terraform validate -chdir=terraform/global
+
+      - name: Terraform init (platform)
+        run: terraform init -backend=false -chdir=terraform/platform
+
+      - name: Terraform validate (platform)
+        run: terraform validate -chdir=terraform/platform
+
+      - name: Helm lint
+        run: helm lint helm/svelte-rooms
+
+      - name: Trivy Helm config scan (blocking)
         uses: aquasecurity/trivy-action@v0.36.0
         with:
           scan-type: config
-          hide-progress: true
-          skip-dirs: node_modules
-          scan-ref: "."
-          severity: HIGH,CRITICAL
+          scan-ref: helm/svelte-rooms
           exit-code: "1"
-          
-  sast:
-    name: Semgrep SAST
-    runs-on: ubuntu-latest
-    container:
-      image: semgrep/semgrep
-    steps:
-      - uses: actions/checkout@v6
-      - name: Semgrep scan
-        run: semgrep scan --config p/default --error
-        continue-on-error: true
+          severity: HIGH,CRITICAL
 
+  trivy-sarif:
+    name: Trivy SARIF (Security Tab)
+    runs-on: ubuntu-latest
+    permissions:
+      security-events: write
+      contents: read
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+
+      - name: Trivy filesystem scan (SARIF)
+        uses: aquasecurity/trivy-action@v0.36.0
+        with:
+          scan-type: fs
+          scan-ref: "."
+          format: sarif
+          output: trivy-results.sarif
+          exit-code: "0"
+
+      - name: Upload SARIF to GitHub Security tab
+        if: always()
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: trivy-results.sarif
