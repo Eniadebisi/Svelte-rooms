@@ -1,0 +1,35 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: aws-logging
+  namespace: aws-observability
+data:
+  fluentbit.conf: |
+    [SERVICE]
+        Flush             5
+        Log_Level         error
+
+    [INPUT]
+        Name              tail
+        Tag               kube.*
+        Path              /var/log/containers/*.log
+        multiline.parser  docker, cri
+        Mem_Buf_Limit     5MB
+        Skip_Long_Lines   On
+        Refresh_Interval  10
+
+    [FILTER]
+        Name              kubernetes
+        Match             kube.*
+        Merge_Log         On
+        Keep_Log          Off
+        K8S-Logging.Parser  On
+        K8S-Logging.Exclude On
+
+    [OUTPUT]
+        Name                  cloudwatch_logs
+        Match                 kube.*
+        region                us-east-1
+        log_group_name        /eks/svelte-rooms
+        log_stream_template   $kubernetes['namespace_name']/$kubernetes['pod_name']
+        auto_create_group     true

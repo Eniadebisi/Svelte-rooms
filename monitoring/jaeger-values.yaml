@@ -1,0 +1,26 @@
+allInOne:
+  enabled: true
+  resources:
+    requests:
+      cpu: 50m
+      memory: 128Mi
+    limits:
+      cpu: 200m
+      memory: 256Mi
+  image:
+    tag: latest
+
+storage:
+  type: memory
+
+agent:
+  enabled: false
+
+collector:
+  enabled: false
+
+query:
+  enabled: false
+
+spark:
+  enabled: false

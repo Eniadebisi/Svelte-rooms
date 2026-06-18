@@ -1,0 +1,38 @@
+groups:
+  - name: svelte-rooms
+    rules:
+      - alert: AppDown
+        expr: absent(up{job="svelte-rooms"}) or up{job="svelte-rooms"} == 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "App is down"
+          description: "No svelte-rooms pods are responding to metrics scrape"
+
+      - alert: High5xxRate
+        expr: rate(http_requests_total{status=~"5.."}[5m]) / rate(http_requests_total[5m]) > 0.05
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High 5xx error rate"
+          description: "5xx rate over 5% for 5 minutes"
+
+      - alert: HighP95Latency
+        expr: histogram_quantile(0.95, rate(http_request_duration_seconds_bucket[10m])) > 1
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High P95 latency"
+          description: "95th percentile latency over 1s for 10 minutes"
+
+      - alert: PodRestartLoop
+        expr: increase(kube_pod_container_status_restarts_total{namespace=~"dev|qa|prod"}[1h]) > 3
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Pod restart loop"
+          description: "Pod {{ $labels.pod }} restarted >3 times in 1h"
