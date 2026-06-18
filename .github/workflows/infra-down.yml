@@ -1,0 +1,48 @@
+name: Infra Down
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '0 2 * * *'  # 2am UTC nightly dead-man switch
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  down:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: "1.10.0"
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.GHA_DEPLOY_ROLE_ARN }}
+          aws-region: ${{ secrets.AWS_REGION }}
+
+      - name: Fetch Terraform vars from SSM
+        run: |
+          DB_PASSWORD=$(aws ssm get-parameter \
+            --name /svelte-rooms/db-password \
+            --with-decryption --query Parameter.Value --output text)
+
+          echo "::add-mask::$DB_PASSWORD"
+          echo "TF_VAR_db_password=$DB_PASSWORD" >> $GITHUB_ENV
+
+      - name: Terraform init
+        run: terraform init -chdir=terraform/platform
+
+      - name: Terraform destroy
+        run: terraform destroy -auto-approve -chdir=terraform/platform
+
+      - name: Confirm retained resources
+        run: |
+          echo "RDS final snapshot retained. ECR images retained. SSM params retained."

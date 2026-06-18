@@ -26,8 +26,7 @@ jobs:
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v6
         with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          role-to-assume: ${{ secrets.GHA_DEPLOY_ROLE_ARN }}
           aws-region: ${{ secrets.AWS_REGION }}
           mask-aws-account-id: true
 
@@ -35,35 +34,52 @@ jobs:
         run: |
           get() { aws ssm get-parameter --name "$1" --with-decryption --query Parameter.Value --output text; }
 
-          DB_PW=$(get /cicd-gh-action-test/terraform/db-password)
-          JWT=$(get /cicd-gh-action-test/terraform/jwt-access-secret)
-          EMAIL=$(get /cicd-gh-action-test/terraform/auth-email)
-          EMAIL_PW=$(get /cicd-gh-action-test/terraform/auth-email-pw)
+          GLOBAL_DB_PW=$(get /svelte-rooms/dev/db-password)
+          JWT=$(get /svelte-rooms/dev/jwt-access-secret)
+          EMAIL=$(get /svelte-rooms/dev/auth-email)
+          EMAIL_PW=$(get /svelte-rooms/dev/auth-email-pw)
+          PLATFORM_DB_PW=$(get /svelte-rooms/db-password)
 
-          echo "::add-mask::$DB_PW"
+          echo "::add-mask::$GLOBAL_DB_PW"
           echo "::add-mask::$JWT"
           echo "::add-mask::$EMAIL_PW"
+          echo "::add-mask::$PLATFORM_DB_PW"
 
-          echo "TF_VAR_db_password=$DB_PW"         >> $GITHUB_ENV
-          echo "TF_VAR_jwt_access_secret=$JWT"     >> $GITHUB_ENV
-          echo "TF_VAR_auth_email=$EMAIL"          >> $GITHUB_ENV
-          echo "TF_VAR_auth_email_pw=$EMAIL_PW"    >> $GITHUB_ENV
+          echo "GLOBAL_DB_PW=$GLOBAL_DB_PW"         >> $GITHUB_ENV
+          echo "PLATFORM_DB_PW=$PLATFORM_DB_PW"     >> $GITHUB_ENV
+          echo "TF_VAR_jwt_access_secret=$JWT"      >> $GITHUB_ENV
+          echo "TF_VAR_auth_email=$EMAIL"           >> $GITHUB_ENV
+          echo "TF_VAR_auth_email_pw=$EMAIL_PW"     >> $GITHUB_ENV
 
       - name: Terraform fmt check
         run: terraform fmt -recursive -check
         continue-on-error: true
 
-      - name: Terraform init
+      - name: Terraform init (global)
         run: terraform init -chdir=terraform/global
 
-      - name: Terraform validate
+      - name: Terraform validate (global)
         run: terraform validate -chdir=terraform/global
 
-      - name: Terraform plan
-        id: plan
+      - name: Terraform plan (global)
+        id: plan-global
         run: |
+          export TF_VAR_db_password="$GLOBAL_DB_PW"
           set -o pipefail
-          terraform plan -no-color -out=tfplan -chdir=terraform/global 2>&1 | tee plan-output.txt
+          terraform plan -no-color -chdir=terraform/global 2>&1 | tee plan-global.txt
+
+      - name: Terraform init (platform)
+        run: terraform init -chdir=terraform/platform
+
+      - name: Terraform validate (platform)
+        run: terraform validate -chdir=terraform/platform
+
+      - name: Terraform plan (platform)
+        id: plan-platform
+        run: |
+          export TF_VAR_db_password="$PLATFORM_DB_PW"
+          set -o pipefail
+          terraform plan -no-color -chdir=terraform/platform 2>&1 | tee plan-platform.txt
 
       - name: Comment plan on PR
         if: github.event_name == 'pull_request'
@@ -72,13 +88,14 @@ jobs:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
             const fs = require('fs');
-            let plan = fs.readFileSync('plan-output.txt', 'utf8');
-            if (plan.length > 65000) {
-              plan = '...output truncated (too large)\n\n' + plan.slice(-65000);
-            }
+            let global = fs.readFileSync('plan-global.txt', 'utf8');
+            let platform = fs.readFileSync('plan-platform.txt', 'utf8');
+            const truncate = (s) => s.length > 30000
+              ? '...truncated\n\n' + s.slice(-30000) : s;
             github.rest.issues.createComment({
               issue_number: context.issue.number,
               owner: context.repo.owner,
               repo: context.repo.repo,
-              body: '```\n' + plan + '\n```'
+              body: '**Global plan:**\n```\n' + truncate(global) + '\n```\n\n' +
+                    '**Platform plan:**\n```\n' + truncate(platform) + '\n```'
             });

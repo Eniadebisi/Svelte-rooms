@@ -1,0 +1,95 @@
+name: Deploy to EKS
+
+on:
+  workflow_call:
+    inputs:
+      environment:
+        required: true
+        type: string
+        description: "Target environment: dev | qa | prod"
+      image-tag:
+        required: true
+        type: string
+        description: "ECR image tag to deploy"
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment: ${{ inputs.environment }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.GHA_DEPLOY_ROLE_ARN }}
+          aws-region: ${{ secrets.AWS_REGION }}
+
+      - name: Check EKS cluster exists
+        run: |
+          aws eks describe-cluster --name svelte-rooms --region ${{ secrets.AWS_REGION }} \
+            || (echo "Cluster not running. Run infra-up.yml first."; exit 1)
+
+      - name: Update kubeconfig
+        run: |
+          aws eks update-kubeconfig --name svelte-rooms --region ${{ secrets.AWS_REGION }}
+
+      - name: Sync secrets from SSM to Kubernetes
+        run: |
+          ENV="${{ inputs.environment }}"
+          NS="${{ inputs.environment }}"
+          PREFIX="/svelte-rooms/${ENV}"
+
+          DB_HOST=$(aws ssm get-parameter \
+            --name ${PREFIX}/db-host \
+            --query Parameter.Value --output text)
+
+          DB_PW=$(aws ssm get-parameter \
+            --name ${PREFIX}/db-password \
+            --with-decryption --query Parameter.Value --output text)
+
+          JWT=$(aws ssm get-parameter \
+            --name ${PREFIX}/jwt-access-secret \
+            --with-decryption --query Parameter.Value --output text)
+
+          EMAIL=$(aws ssm get-parameter \
+            --name ${PREFIX}/auth-email \
+            --with-decryption --query Parameter.Value --output text)
+
+          EMAIL_PW=$(aws ssm get-parameter \
+            --name ${PREFIX}/auth-email-pw \
+            --with-decryption --query Parameter.Value --output text)
+
+          kubectl create secret generic svelte-rooms-secrets -n ${NS} \
+            --from-literal=DB_HOST="${DB_HOST}" \
+            --from-literal=DB_PASSWORD="${DB_PW}" \
+            --from-literal=JWT_ACCESS_SECRET="${JWT}" \
+            --from-literal=AUTH_EMAIL="${EMAIL}" \
+            --from-literal=AUTH_EMAIL_PW="${EMAIL_PW}" \
+            --dry-run=client -o yaml | kubectl apply -f -
+
+      - name: Helm upgrade / install
+        run: |
+          helm upgrade --install svelte-rooms ./helm/svelte-rooms \
+            -n ${{ inputs.environment }} \
+            -f helm/svelte-rooms/values-${{ inputs.environment }}.yaml \
+            --set image.repository=${{ secrets.ECR_REPOSITORY }} \
+            --set image.tag=${{ inputs.image-tag }} \
+            --atomic \
+            --wait \
+            --timeout 5m \
+            --create-namespace
+
+      - name: Post-deploy smoke test
+        run: |
+          kubectl run smoke-${GITHUB_SHA::7} \
+            --rm -i --restart=Never \
+            --image=curlimages/curl \
+            -n ${{ inputs.environment }} \
+            -- curl -sf http://svelte-rooms.${{ inputs.environment }}.svc.cluster.local/health

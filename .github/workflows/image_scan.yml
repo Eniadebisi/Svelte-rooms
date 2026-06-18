@@ -4,6 +4,11 @@ on:
     - cron: '0 6 * * 1'  
   workflow_dispatch:
 
+permissions:
+  id-token: write
+  contents: read
+  security-events: write
+
 jobs:
   gitleaks:
     runs-on: ubuntu-latest
