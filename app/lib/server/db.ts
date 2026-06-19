@@ -9,19 +9,17 @@ declare global {
 const adapter = new PrismaMariaDb({
   database: process.env.DB_NAME,
   host: process.env.DB_HOST,
-  port: process.env.DB_PORT ? parseInt(process.env.DB_PORT) : undefined,
+  port: process.env.DB_PORT ? parseInt(process.env.DB_PORT) : 3306,
   user: process.env.DB_USER,
   password: process.env.DB_PASSWORD,
   connectionLimit: 5,
-  allowPublicKeyRetrieval: true,
+  connectTimeout: 10000,
 });
 
-export const prisma = global.prisma || new PrismaClient({
+export const prisma = global.prisma ?? new PrismaClient({
   adapter,
   log: ["info", "warn", "error"],
 });
-
-// db.$on("query", (e) => {})
 
 export async function queryRooms() {
   const rooms = await prisma.room.findMany();

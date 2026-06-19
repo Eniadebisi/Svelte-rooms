@@ -1,0 +1,11 @@
+# Known acceptable findings — review before adding entries
+# Format: CVE-XXXX-XXXXX  # reason: <justification>
+#
+# Instructions:
+#   1. Add an entry only after confirming the CVE is not reachable in production
+#      (e.g., dev-only dependency, fix not yet available, compensating control in place).
+#   2. Include a comment with the reason and the date the exception was granted.
+#   3. Re-evaluate entries on each major dependency update.
+#
+# Example (remove when adding real entries):
+# CVE-2023-XXXXX  # reason: dev-only dependency, not reachable in production — added YYYY-MM-DD

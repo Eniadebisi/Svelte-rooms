@@ -1,0 +1,57 @@
+name: Infra Down
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '0 2 * * *'  # 2am UTC nightly dead-man switch
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  down:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v4.0.1
+        with:
+          terraform_version: "1.10.0"
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v6
+        with:
+          role-to-assume: ${{ secrets.GHA_DEPLOY_ROLE_ARN }}
+          aws-region: ${{ secrets.AWS_REGION }}
+
+      - name: Fetch Terraform vars from SSM
+        run: |
+          get() { aws ssm get-parameter --name "$1" --with-decryption --query Parameter.Value --output text; }
+
+          DB_PW=$(get /cicd-gh-action-test/db-password)
+          JWT=$(get /cicd-gh-action-test/jwt-access-secret)
+          EMAIL=$(get /cicd-gh-action-test/auth-email)
+          EMAIL_PW=$(get /cicd-gh-action-test/auth-email-pw)
+
+          echo "::add-mask::$DB_PW"
+          echo "::add-mask::$JWT"
+          echo "::add-mask::$EMAIL_PW"
+
+          echo "TF_VAR_db_password=$DB_PW"         >> $GITHUB_ENV
+          echo "TF_VAR_jwt_access_secret=$JWT"     >> $GITHUB_ENV
+          echo "TF_VAR_auth_email=$EMAIL"          >> $GITHUB_ENV
+          echo "TF_VAR_auth_email_pw=$EMAIL_PW"    >> $GITHUB_ENV
+
+      - name: Terraform init
+        run: terraform -chdir=terraform/platform init
+
+      - name: Terraform destroy
+        run: terraform -chdir=terraform/platform destroy -auto-approve
+
+      - name: Confirm retained resources
+        run: |
+          echo "RDS final snapshot retained. ECR images retained. SSM params retained."

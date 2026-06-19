@@ -1,0 +1,61 @@
+replicaCount: 1
+
+image:
+  repository: ""
+  tag: "latest"
+  pullPolicy: IfNotPresent
+
+service:
+  type: ClusterIP
+  port: 80
+  targetPort: 8080
+
+resources:
+  requests:
+    cpu: "100m"
+    memory: "256Mi"
+  limits:
+    cpu: "500m"
+    memory: "512Mi"
+
+autoscaling:
+  enabled: false
+  minReplicas: 1
+  maxReplicas: 2
+  targetCPUUtilizationPercentage: 70
+
+env:
+  NODE_ENV: "production"
+  PORT: "8080"
+  MODE: "production"
+  DB_PORT: "3306"
+  DB_NAME: "svelte_rooms"
+  DB_USER: "admin"
+  NODE_OPTIONS: "--require ./otel.cjs"
+  OTEL_EXPORTER_OTLP_ENDPOINT: "http://jaeger-collector.observability:4318"
+  OTEL_SERVICE_NAME: "svelte-rooms"
+
+secretName: "svelte-rooms-secrets"
+
+serviceAccount:
+  roleArn: ""
+
+backup:
+  enabled: false
+  schedule: "0 3 * * *"
+  bucket: ""
+  roleArn: ""
+
+livenessProbe:
+  httpGet:
+    path: /health
+    port: 8080
+  initialDelaySeconds: 30
+  periodSeconds: 10
+
+readinessProbe:
+  httpGet:
+    path: /health
+    port: 8080
+  initialDelaySeconds: 10
+  periodSeconds: 5

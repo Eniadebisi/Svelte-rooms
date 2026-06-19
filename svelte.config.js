@@ -9,15 +9,15 @@ const config = {
 
   kit: {
     alias: {
-      $lib: "./src/lib",
-      "$lib/*": "./src/lib/*",
-      $src: "./src",
-      "$src/*": "./src/*",
+      $lib: "./app/lib",
+      "$lib/*": "./app/lib/*",
+      $app: "./app",
+      "$app/*": "./app/*",
       $static: "./static/",
-      $db: "./src/lib/server/db.js",
+      $db: "./app/lib/server/db.js",
       // "$logs": ["./logs"],
-      $styles: "./src/scss/*",
-      $modals: "./src/lib/modals",
+      $styles: "./app/scss/*",
+      $modals: "./app/lib/modals",
           },
     // adapter-auto only supports some environments, see https://kit.svelte.dev/docs/adapter-auto for a list.
     // If your environment is not supported, or you settled on a specific environment, switch out the adapter.

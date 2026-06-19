@@ -1,0 +1,51 @@
+name: Integration Test
+
+on:
+  workflow_call:
+    inputs:
+      image-tag:
+        required: true
+        type: string
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  test:
+    name: Integration Test
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v6
+        with:
+          role-to-assume: ${{ secrets.GHA_DEPLOY_ROLE_ARN }}
+          aws-region: ${{ secrets.AWS_REGION }}
+
+      - name: Login to ECR
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Pull built image
+        run: docker pull ${{ secrets.ECR_REPOSITORY }}:${{ inputs.image-tag }}
+
+      - name: Run container health check
+        run: |
+          docker run -d \
+            --name svelte-rooms-test \
+            -p 3000:3000 \
+            -e NODE_ENV=production \
+            -e PORT=3000 \
+            ${{ secrets.ECR_REPOSITORY }}:${{ inputs.image-tag }}
+
+          echo "Waiting for container to start..."
+          sleep 15
+
+          curl --retry 5 --retry-delay 5 --retry-connrefused \
+            --fail http://localhost:3000/health
+
+          docker stop svelte-rooms-test
+          docker rm svelte-rooms-test

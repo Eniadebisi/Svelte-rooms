@@ -8,57 +8,74 @@ on:
       - '.github/workflows/terraform-plan.yml'
   workflow_dispatch:
 
+permissions:
+  id-token: write
+  contents: read
+  pull-requests: write
+
 jobs:
   plan:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v6
+      - name: Checkout code
+        uses: actions/checkout@v6
 
-      - uses: hashicorp/setup-terraform@v4
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v4.0.1
         with:
           terraform_version: "1.10.0"
 
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v6
         with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          role-to-assume: ${{ secrets.GHA_DEPLOY_ROLE_ARN }}
           aws-region: ${{ secrets.AWS_REGION }}
-          mask-aws-account-id: true
 
       - name: Fetch Terraform vars from SSM
         run: |
           get() { aws ssm get-parameter --name "$1" --with-decryption --query Parameter.Value --output text; }
 
-          DB_PW=$(get /cicd-gh-action-test/terraform/db-password)
-          JWT=$(get /cicd-gh-action-test/terraform/jwt-access-secret)
-          EMAIL=$(get /cicd-gh-action-test/terraform/auth-email)
-          EMAIL_PW=$(get /cicd-gh-action-test/terraform/auth-email-pw)
+          DB_PW=$(get /cicd-gh-action-test/db-password)
+          JWT=$(get /cicd-gh-action-test/jwt-access-secret)
+          EMAIL=$(get /cicd-gh-action-test/auth-email)
+          EMAIL_PW=$(get /cicd-gh-action-test/auth-email-pw)
 
           echo "::add-mask::$DB_PW"
           echo "::add-mask::$JWT"
           echo "::add-mask::$EMAIL_PW"
 
-          echo "TF_VAR_db_password=$DB_PW"             >> $GITHUB_ENV
-          echo "TF_VAR_jwt_access_secret=$JWT"         >> $GITHUB_ENV
-          echo "TF_VAR_auth_email=$EMAIL"              >> $GITHUB_ENV
-          echo "TF_VAR_auth_email_pw=$EMAIL_PW"        >> $GITHUB_ENV
+          echo "TF_VAR_db_password=$DB_PW"         >> $GITHUB_ENV
+          echo "TF_VAR_jwt_access_secret=$JWT"     >> $GITHUB_ENV
+          echo "TF_VAR_auth_email=$EMAIL"          >> $GITHUB_ENV
+          echo "TF_VAR_auth_email_pw=$EMAIL_PW"    >> $GITHUB_ENV
 
       - name: Terraform fmt check
-        run: terraform fmt -recursive -check
+        run: terraform fmt -recursive -check terraform/
         continue-on-error: true
 
-      - name: Terraform init
-        run: terraform init
+      - name: Terraform init (global)
+        run: terraform -chdir=terraform/global init
 
-      - name: Terraform validate
-        run: terraform validate
+      - name: Terraform validate (global)
+        run: terraform -chdir=terraform/global validate
 
-      - name: Terraform plan
-        id: plan
+      - name: Terraform plan (global)
+        id: plan-global
         run: |
           set -o pipefail
-          terraform plan -no-color -out=tfplan 2>&1 | tee plan-output.txt
+          terraform -chdir=terraform/global plan -no-color 2>&1 | tee plan-global.txt
+
+      - name: Terraform init (platform)
+        run: terraform -chdir=terraform/platform init
+
+      - name: Terraform validate (platform)
+        run: terraform -chdir=terraform/platform validate
+
+      - name: Terraform plan (platform)
+        id: plan-platform
+        run: |
+          set -o pipefail
+          terraform -chdir=terraform/platform plan -no-color 2>&1 | tee plan-platform.txt
 
       - name: Comment plan on PR
         if: github.event_name == 'pull_request'
@@ -67,13 +84,14 @@ jobs:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
             const fs = require('fs');
-            let plan = fs.readFileSync('plan-output.txt', 'utf8');
-            if (plan.length > 65000) {
-              plan = '...output truncated (too large)\n\n' + plan.slice(-65000);
-            }
+            let global = fs.readFileSync('plan-global.txt', 'utf8');
+            let platform = fs.readFileSync('plan-platform.txt', 'utf8');
+            const truncate = (s) => s.length > 30000
+              ? '...truncated\n\n' + s.slice(-30000) : s;
             github.rest.issues.createComment({
               issue_number: context.issue.number,
               owner: context.repo.owner,
               repo: context.repo.repo,
-              body: '```\n' + plan + '\n```'
+              body: '**Global plan:**\n```\n' + truncate(global) + '\n```\n\n' +
+                    '**Platform plan:**\n```\n' + truncate(platform) + '\n```'
             });
