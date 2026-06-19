@@ -21,11 +21,9 @@ jobs:
           cache: npm
 
       - name: Install dependencies
-        working-directory: app
         run: npm ci
 
       - name: Run unit tests
-        working-directory: app
         run: npm test
         continue-on-error: true
         
@@ -40,7 +38,7 @@ jobs:
         #   ignore-unfixed: true
 
       - name: Validate Prisma schema
-        run: npx --prefix app prisma validate
+        run: npx prisma validate
 
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v4.0.1
