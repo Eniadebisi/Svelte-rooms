@@ -12,7 +12,7 @@ jobs:
 
   build:
     name: Build Package
-    needs: [validate]
+    needs: validate
     uses: ./.github/workflows/_build.yml
     secrets: inherit
     with:
