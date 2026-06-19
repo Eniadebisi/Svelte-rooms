@@ -1,4 +1,4 @@
-name: Test QA, Deploy & Promote
+name: "3-9. QA: Testing, scans, validations and build"
 
 on:
   push:

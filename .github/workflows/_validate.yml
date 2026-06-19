@@ -26,16 +26,16 @@ jobs:
       - name: Run unit tests
         run: npm test
         continue-on-error: true
-        
-        # - name: Trivy filesystem scan
-        # uses: aquasecurity/trivy-action@v0.36.0
-        # with:
-        #   scan-type: fs
-        #   scan-ref: "."
-        #   scanners: "vuln,secret,misconfig"
-        #   severity: HIGH,CRITICAL
-        #   exit-code: "1"
-        #   ignore-unfixed: true
+
+      - name: Trivy filesystem scan
+        uses: aquasecurity/trivy-action@v0.36.0
+        with:
+          scan-type: fs
+          scan-ref: "."
+          scanners: "vuln,secret,misconfig"
+          severity: HIGH,CRITICAL
+          exit-code: "1"
+          ignore-unfixed: true
 
       - name: Validate Prisma schema
         run: npx prisma validate
@@ -44,6 +44,9 @@ jobs:
         uses: hashicorp/setup-terraform@v4.0.1
         with:
           terraform_version: "1.10.0"
+
+      - name: Fix terraform permissions
+        run: chmod +x ${TERRAFORM_CLI_PATH}/terraform 2>/dev/null || true
 
       - name: Terraform fmt check
         run: terraform fmt -recursive -check -write=false terraform/
@@ -61,39 +64,42 @@ jobs:
       - name: Terraform validate (platform)
         run: terraform -chdir=terraform/platform validate
 
+      - name: Setup Helm
+        uses: azure/setup-helm@v4
+
       - name: Helm lint
         run: helm lint helm/svelte-rooms
 
-      # - name: Trivy Helm config scan 
-      #   uses: aquasecurity/trivy-action@v0.36.0
-      #   with:
-      #     scan-type: config
-      #     scan-ref: helm/svelte-rooms
-      #     exit-code: "1"
-      #     severity: HIGH,CRITICAL
+      - name: Trivy Helm config scan
+        uses: aquasecurity/trivy-action@v0.36.0
+        with:
+          scan-type: config
+          scan-ref: helm/svelte-rooms
+          exit-code: "1"
+          severity: HIGH,CRITICAL
 
-  # trivy-sarif:
-  #   name: Trivy SARIF (Security Tab)
-  #   runs-on: ubuntu-latest
-  #   permissions:
-  #     security-events: write
-  #     contents: read
-  #
-  #   steps:
-  #     - name: Checkout code
-  #       uses: actions/checkout@v6
-  #
-  #     - name: Trivy filesystem scan
-  #       uses: aquasecurity/trivy-action@v0.36.0
-  #       with:
-  #         scan-type: fs
-  #         scan-ref: "."
-  #         format: sarif
-  #         output: trivy-results.sarif
-  #         exit-code: "0"
-  #
-  #     - name: Upload SARIF to GitHub Security tab
-  #       if: always()
-  #       uses: github/codeql-action/upload-sarif@v3
-  #       with:
-  #         sarif_file: trivy-results.sarif
+  trivy-sarif:
+    name: Trivy SARIF (Security Tab)
+    runs-on: ubuntu-latest
+    permissions:
+      security-events: write
+      contents: read
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+
+      - name: Trivy filesystem scan
+        uses: aquasecurity/trivy-action@v0.36.0
+        with:
+          scan-type: fs
+          scan-ref: "."
+          format: sarif
+          output: trivy-results.sarif
+          exit-code: "0"
+
+      - name: Upload SARIF to GitHub Security tab
+        if: always()
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: trivy-results.sarif
