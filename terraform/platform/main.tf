@@ -139,6 +139,7 @@ resource "aws_db_instance" "main" {
   backup_retention_period   = 7
   skip_final_snapshot       = false
   final_snapshot_identifier = "${var.project_name}-final-snapshot"
+  storage_encrypted         = true
 
   # Stop billing when idle: aws rds stop-db-instance --db-instance-identifier <id>
   tags = { Project = var.project_name }
