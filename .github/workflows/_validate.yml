@@ -40,8 +40,7 @@ jobs:
         #   ignore-unfixed: true
 
       - name: Validate Prisma schema
-        working-directory: app
-        run: npx prisma validate
+        run: npx --prefix app prisma validate
 
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v4.0.1
