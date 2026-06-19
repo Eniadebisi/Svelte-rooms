@@ -1,4 +1,5 @@
-name: 1. Code Commit, PR validation
+name: "01. Code Commit"
+run-name: "${{ github.event.head_commit.message }}"
 
 on:
   push:
@@ -6,8 +7,8 @@ on:
 
 jobs:
   validate:
-    name: Validate
-    uses: ./.github/workflows/_validate.yml
+    name: Stages 3-8 Validate
+    uses: ./.github/workflows/_03-08_validate.yml
     secrets: inherit
 
   promote-qa:

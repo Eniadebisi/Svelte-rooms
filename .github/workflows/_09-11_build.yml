@@ -1,4 +1,4 @@
-name: Build & scan image
+name: "Stages 9-11: Container Build, Scan & Push to ECR"
 
 on:
   workflow_call:

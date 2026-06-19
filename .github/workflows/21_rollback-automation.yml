@@ -1,4 +1,5 @@
-name: Rollback
+name: "21. Rollback Automation"
+run-name: "Rollback: ${{ inputs.environment }}"
 
 on:
   workflow_dispatch:
@@ -22,6 +23,7 @@ permissions:
 
 jobs:
   rollback:
+    name: Rollback ${{ inputs.environment }}
     runs-on: ubuntu-latest
     environment: ${{ inputs.environment }}
 
