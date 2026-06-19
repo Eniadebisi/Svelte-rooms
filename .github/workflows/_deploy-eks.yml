@@ -31,6 +31,10 @@ jobs:
           role-to-assume: ${{ secrets.GHA_DEPLOY_ROLE_ARN }}
           aws-region: ${{ secrets.AWS_REGION }}
 
+      - name: Login to ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
       - name: Check EKS cluster exists
         run: |
           aws eks describe-cluster --name svelte-rooms --region ${{ secrets.AWS_REGION }} \
@@ -79,7 +83,7 @@ jobs:
           helm upgrade --install svelte-rooms ./helm/svelte-rooms \
             -n ${{ inputs.environment }} \
             -f helm/svelte-rooms/values-${{ inputs.environment }}.yaml \
-            --set image.repository=${{ secrets.ECR_REPOSITORY }} \
+            --set image.repository=${{ steps.login-ecr.outputs.registry }}/${{ secrets.ECR_REPOSITORY }} \
             --set image.tag=${{ inputs.image-tag }} \
             --atomic \
             --wait \
