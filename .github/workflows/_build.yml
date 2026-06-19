@@ -44,17 +44,19 @@ jobs:
           echo "tag=${ENV}-${SHA}" >> $GITHUB_OUTPUT
 
       - name: Build Docker image
+        env:
+          REGISTRY: ${{ steps.login-ecr.outputs.registry }}
         run: |
           REPO="${{ secrets.ECR_REPOSITORY }}"
           TAG="${{ steps.meta.outputs.tag }}"
 
           docker build \
-            -t $REPO:$TAG .
+            -t $REGISTRY/$REPO:$TAG .
 
       # - name: Trivy image scan (blocking)
       #   uses: aquasecurity/trivy-action@v0.36.0
       #   with:
-      #     image-ref: ${{ secrets.ECR_REPOSITORY }}:${{ steps.meta.outputs.tag }}
+      #     image-ref: ${{ steps.login-ecr.outputs.registry }}/${{ secrets.ECR_REPOSITORY }}:${{ steps.meta.outputs.tag }}
       #     scanners: 'vuln,secret'
       #     format: table
       #     exit-code: "1"
@@ -68,4 +70,4 @@ jobs:
           REPO="${{ secrets.ECR_REPOSITORY }}"
           TAG="${{ steps.meta.outputs.tag }}"
 
-          docker push $REPO:$TAG
+          docker push $REGISTRY/$REPO:$TAG

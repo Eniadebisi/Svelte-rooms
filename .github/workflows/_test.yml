@@ -27,10 +27,11 @@ jobs:
           aws-region: ${{ secrets.AWS_REGION }}
 
       - name: Login to ECR
+        id: login-ecr
         uses: aws-actions/amazon-ecr-login@v2
 
       - name: Pull built image
-        run: docker pull ${{ secrets.ECR_REPOSITORY }}:${{ inputs.image-tag }}
+        run: docker pull ${{ steps.login-ecr.outputs.registry }}/${{ secrets.ECR_REPOSITORY }}:${{ inputs.image-tag }}
 
       - name: Run container health check
         run: |
@@ -39,7 +40,7 @@ jobs:
             -p 3000:3000 \
             -e NODE_ENV=production \
             -e PORT=3000 \
-            ${{ secrets.ECR_REPOSITORY }}:${{ inputs.image-tag }}
+            ${{ steps.login-ecr.outputs.registry }}/${{ secrets.ECR_REPOSITORY }}:${{ inputs.image-tag }}
 
           echo "Waiting for container to start..."
           sleep 15

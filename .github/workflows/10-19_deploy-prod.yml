@@ -29,10 +29,13 @@ jobs:
           aws-region: ${{ secrets.AWS_REGION }}
 
       - name: Login to ECR
+        id: login-ecr
         uses: aws-actions/amazon-ecr-login@v2
 
       - name: Retag QA image as Prod
         id: tag
+        env:
+          REGISTRY: ${{ steps.login-ecr.outputs.registry }}
         run: |
           git fetch --tags
           VERSION=$(git tag -l 'v*' | sort -V | tail -1)
@@ -47,11 +50,11 @@ jobs:
 
           PROD_TAG="prod-${VERSION}"
 
-          docker pull $REPO:$QA_TAG
+          docker pull $REGISTRY/$REPO:$QA_TAG
 
-          docker tag $REPO:$QA_TAG $REPO:$PROD_TAG
+          docker tag $REGISTRY/$REPO:$QA_TAG $REGISTRY/$REPO:$PROD_TAG
 
-          docker push $REPO:$PROD_TAG
+          docker push $REGISTRY/$REPO:$PROD_TAG
 
           echo "image-tag=${PROD_TAG}" >> $GITHUB_OUTPUT
           echo "version=${VERSION}" >> $GITHUB_OUTPUT
