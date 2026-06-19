@@ -9,7 +9,7 @@
     "check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
     "check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch",
     "lint": "eslint .",
-    "test": "vitest"
+    "test": "vitest --passWithNoTests"
   },
   "overrides": {
     "cookie": "^0.7.0",
