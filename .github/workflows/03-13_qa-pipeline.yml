@@ -27,15 +27,9 @@ jobs:
       image-tag: ${{ needs.build.outputs.image-tag }}
     secrets: inherit
 
-  infra:
-    name: Infra Up
-    needs: [build, test]
-    uses: ./.github/workflows/infra-up.yml
-    secrets: inherit
-
   deploy:
     name: Stage 12 Deploy to QA
-    needs: [build, test, infra]
+    needs: [build, test]
     uses: ./.github/workflows/_deploy-eks.yml
     with:
       environment: qa
