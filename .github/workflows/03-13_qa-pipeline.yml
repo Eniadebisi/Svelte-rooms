@@ -1,4 +1,5 @@
-name: "3-9. QA: Testing, scans, validations and build"
+name: "03-13. QA Pipeline"
+run-name: "${{ github.event.head_commit.message }}"
 
 on:
   push:
@@ -6,22 +7,22 @@ on:
 
 jobs:
   validate:
-    name: Validate
-    uses: ./.github/workflows/_validate.yml
+    name: Stages 3-8 Validate
+    uses: ./.github/workflows/_03-08_validate.yml
     secrets: inherit
 
   build:
-    name: Build Package
+    name: Stages 9-11 Build & Push
     needs: validate
-    uses: ./.github/workflows/_build.yml
+    uses: ./.github/workflows/_09-11_build.yml
     secrets: inherit
     with:
       environment: qa
 
   test:
-    name: Integration Test
+    name: Stage 13 Integration Test
     needs: build
-    uses: ./.github/workflows/_test.yml
+    uses: ./.github/workflows/_13_integration-test.yml
     with:
       image-tag: ${{ needs.build.outputs.image-tag }}
     secrets: inherit
@@ -33,7 +34,7 @@ jobs:
     secrets: inherit
 
   deploy:
-    name: Deploy EKS QA
+    name: Stage 12 Deploy to QA
     needs: [build, test, infra]
     uses: ./.github/workflows/_deploy-eks.yml
     with:
@@ -42,7 +43,7 @@ jobs:
     secrets: inherit
 
   gittag:
-    name: Tag for git push
+    name: Tag Release
     needs: [deploy]
     runs-on: ubuntu-latest
     permissions:
@@ -62,7 +63,7 @@ jobs:
           MAJOR=$(echo $LAST_TAG | cut -d. -f1 | tr -d v)
           MINOR=$(echo $LAST_TAG | cut -d. -f2)
           PATCH=$(echo $LAST_TAG | cut -d. -f3)
-  
+
           COMMIT_MSG=$(git log --format=%s -1 HEAD^2 2>/dev/null || git log --format=%s -1 HEAD)
 
           if echo "$COMMIT_MSG" | grep -qiE 'breaking|feat!'; then
@@ -82,7 +83,7 @@ jobs:
           git push origin "$NEW_TAG"
 
   promote-prod:
-    name: Promote to Prod
+    name: Stage 15 Approval Gate — Open PR to Prod
     needs: [deploy]
     runs-on: ubuntu-latest
     permissions:

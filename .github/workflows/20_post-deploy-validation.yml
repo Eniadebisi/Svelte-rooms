@@ -1,7 +1,9 @@
-name: Weekly Security Scan
+name: "20. Post-Deploy Validation"
+run-name: "Post-Deploy Validation"
+
 on:
   schedule:
-    - cron: '0 6 * * 1'  
+    - cron: '0 6 * * 1'
   workflow_dispatch:
 
 permissions:
@@ -11,6 +13,7 @@ permissions:
 
 jobs:
   gitleaks:
+    name: Stage 6 Secret Detection — Scheduled Scan
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code

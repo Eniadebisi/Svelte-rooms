@@ -1,4 +1,4 @@
-name: Deploy to EKS
+name: "Deploy to EKS (Stages 12 / 16 / 19)"
 
 on:
   workflow_call:

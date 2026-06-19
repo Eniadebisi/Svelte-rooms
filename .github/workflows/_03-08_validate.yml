@@ -1,4 +1,4 @@
-name: Validate
+name: "Stages 3-8: Unit Test, SAST, Dep Scan, Secrets, TF Validate, Checkov"
 
 on:
   workflow_call:

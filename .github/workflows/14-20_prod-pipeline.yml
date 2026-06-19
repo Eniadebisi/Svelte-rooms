@@ -1,4 +1,4 @@
-name: "10. Prod: Scan, Deploy to Prod & Tag Release"
+name: "14-20. Production Pipeline"
 run-name: "${{ github.event.head_commit.message }}"
 
 on:
@@ -7,7 +7,7 @@ on:
 
 jobs:
   retag:
-    name: Retag QA image for Prod
+    name: Stage 19 Retag QA Image for Prod
     runs-on: ubuntu-latest
     permissions:
       id-token: write
@@ -60,7 +60,7 @@ jobs:
           echo "version=${VERSION}" >> $GITHUB_OUTPUT
 
   deploy:
-    name: Deploy AWS Prod
+    name: Stage 19 Deploy to Production
     needs: [retag]
     uses: ./.github/workflows/_deploy-eks.yml
     with:
@@ -69,7 +69,7 @@ jobs:
     secrets: inherit
 
   release:
-    name: Create GitHub Release
+    name: Stage 20 Post-Deploy — GitHub Release
     needs: [retag, deploy]
     runs-on: ubuntu-latest
     permissions:
