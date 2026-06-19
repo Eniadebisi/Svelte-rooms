@@ -1,2 +1,6 @@
 AVD-AWS-0104
 AVD-AWS-0164
+
+# node_modules third-party Dockerfiles — not our code
+DS-0002
+DS-0029
