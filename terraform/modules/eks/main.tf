@@ -151,9 +151,9 @@ resource "aws_iam_role_policy_attachment" "vpc_cni" {
 # --- EKS Addons ---
 
 resource "aws_eks_addon" "vpc_cni" {
-  cluster_name             = aws_eks_cluster.main.name
-  addon_name               = "vpc-cni"
-  service_account_role_arn = aws_iam_role.vpc_cni.arn
+  cluster_name                = aws_eks_cluster.main.name
+  addon_name                  = "vpc-cni"
+  service_account_role_arn    = aws_iam_role.vpc_cni.arn
   resolve_conflicts_on_create = "OVERWRITE"
 
   depends_on = [aws_eks_fargate_profile.kube_system]
