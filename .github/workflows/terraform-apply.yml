@@ -36,19 +36,19 @@ jobs:
         run: |
           get() { aws ssm get-parameter --name "$1" --with-decryption --query Parameter.Value --output text; }
 
-          DB_PW=$(get /svelte-rooms/dev/db-password)
-          JWT=$(get /svelte-rooms/dev/jwt-access-secret)
-          EMAIL=$(get /svelte-rooms/dev/auth-email)
-          EMAIL_PW=$(get /svelte-rooms/dev/auth-email-pw)
+          DB_PW=$(get /cicd-gh-action-test/db-password)
+          JWT=$(get /cicd-gh-action-test/jwt-access-secret)
+          EMAIL=$(get /cicd-gh-action-test/auth-email)
+          EMAIL_PW=$(get /cicd-gh-action-test/auth-email-pw)
 
           echo "::add-mask::$DB_PW"
           echo "::add-mask::$JWT"
           echo "::add-mask::$EMAIL_PW"
 
-          echo "TF_VAR_db_password=$DB_PW"          >> $GITHUB_ENV
-          echo "TF_VAR_jwt_access_secret=$JWT"      >> $GITHUB_ENV
-          echo "TF_VAR_auth_email=$EMAIL"           >> $GITHUB_ENV
-          echo "TF_VAR_auth_email_pw=$EMAIL_PW"     >> $GITHUB_ENV
+          echo "TF_VAR_db_password=$DB_PW"         >> $GITHUB_ENV
+          echo "TF_VAR_jwt_access_secret=$JWT"     >> $GITHUB_ENV
+          echo "TF_VAR_auth_email=$EMAIL"          >> $GITHUB_ENV
+          echo "TF_VAR_auth_email_pw=$EMAIL_PW"    >> $GITHUB_ENV
 
       - name: Terraform init
         run: terraform init -chdir=terraform/global

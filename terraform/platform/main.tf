@@ -189,7 +189,10 @@ resource "aws_iam_role_policy" "backup_s3" {
   })
 }
 
-# SSM params — all envs share one RDS instance; secrets are per-env for RBAC isolation
+# ============================================================
+# SSM Parameters — all envs share one RDS; secrets per env
+# ============================================================
+
 resource "aws_ssm_parameter" "db_host" {
   for_each = toset(var.environments)
 
