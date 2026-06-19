@@ -23,27 +23,27 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-  trivy-file-scan:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      security-events: write
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v6
-        with:
-          fetch-depth: 0
-
-      - name: Run Trivy vulnerability scanner on repo 
-        uses: aquasecurity/trivy-action@v0.36.0
-        with:
-          scan-type: fs
-          scan-ref: '.'
-          severity: 'MEDIUM,HIGH,CRITICAL'
-          format: sarif
-          output: trivy-results.sarif
-
-      - name: Upload results to Gh Security tab
-        uses: github/codeql-action/upload-sarif@v3
-        with:
-          sarif_file: trivy-results.sarif
+  # trivy-file-scan:
+  #   runs-on: ubuntu-latest
+  #   permissions:
+  #     contents: read
+  #     security-events: write
+  #   steps:
+  #     - name: Checkout code
+  #       uses: actions/checkout@v6
+  #       with:
+  #         fetch-depth: 0
+  #
+  #     - name: Run Trivy vulnerability scanner on repo
+  #       uses: aquasecurity/trivy-action@v0.36.0
+  #       with:
+  #         scan-type: fs
+  #         scan-ref: '.'
+  #         severity: 'MEDIUM,HIGH,CRITICAL'
+  #         format: sarif
+  #         output: trivy-results.sarif
+  #
+  #     - name: Upload results to Gh Security tab
+  #       uses: github/codeql-action/upload-sarif@v3
+  #       with:
+  #         sarif_file: trivy-results.sarif

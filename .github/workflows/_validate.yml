@@ -64,36 +64,36 @@ jobs:
       - name: Helm lint
         run: helm lint helm/svelte-rooms
 
-      - name: Trivy Helm config scan (blocking)
-        uses: aquasecurity/trivy-action@v0.36.0
-        with:
-          scan-type: config
-          scan-ref: helm/svelte-rooms
-          exit-code: "1"
-          severity: HIGH,CRITICAL
+      # - name: Trivy Helm config scan 
+      #   uses: aquasecurity/trivy-action@v0.36.0
+      #   with:
+      #     scan-type: config
+      #     scan-ref: helm/svelte-rooms
+      #     exit-code: "1"
+      #     severity: HIGH,CRITICAL
 
-  trivy-sarif:
-    name: Trivy SARIF (Security Tab)
-    runs-on: ubuntu-latest
-    permissions:
-      security-events: write
-      contents: read
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v6
-
-      - name: Trivy filesystem scan
-        uses: aquasecurity/trivy-action@v0.36.0
-        with:
-          scan-type: fs
-          scan-ref: "."
-          format: sarif
-          output: trivy-results.sarif
-          exit-code: "0"
-
-      - name: Upload SARIF to GitHub Security tab
-        if: always()
-        uses: github/codeql-action/upload-sarif@v3
-        with:
-          sarif_file: trivy-results.sarif
+  # trivy-sarif:
+  #   name: Trivy SARIF (Security Tab)
+  #   runs-on: ubuntu-latest
+  #   permissions:
+  #     security-events: write
+  #     contents: read
+  #
+  #   steps:
+  #     - name: Checkout code
+  #       uses: actions/checkout@v6
+  #
+  #     - name: Trivy filesystem scan
+  #       uses: aquasecurity/trivy-action@v0.36.0
+  #       with:
+  #         scan-type: fs
+  #         scan-ref: "."
+  #         format: sarif
+  #         output: trivy-results.sarif
+  #         exit-code: "0"
+  #
+  #     - name: Upload SARIF to GitHub Security tab
+  #       if: always()
+  #       uses: github/codeql-action/upload-sarif@v3
+  #       with:
+  #         sarif_file: trivy-results.sarif

@@ -29,3 +29,5 @@ vite.config.ts.timestamp-*
 prisma/generated
 .env*.local
 .claude
+.secrets
+.actrc
