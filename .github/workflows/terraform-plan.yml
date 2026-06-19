@@ -50,32 +50,32 @@ jobs:
           echo "TF_VAR_auth_email_pw=$EMAIL_PW"    >> $GITHUB_ENV
 
       - name: Terraform fmt check
-        run: terraform fmt -recursive -check
+        run: terraform fmt -recursive -check terraform/
         continue-on-error: true
 
       - name: Terraform init (global)
-        run: terraform init -chdir=terraform/global
+        run: terraform -chdir=terraform/global init
 
       - name: Terraform validate (global)
-        run: terraform validate -chdir=terraform/global
+        run: terraform -chdir=terraform/global validate
 
       - name: Terraform plan (global)
         id: plan-global
         run: |
           set -o pipefail
-          terraform plan -no-color -chdir=terraform/global 2>&1 | tee plan-global.txt
+          terraform -chdir=terraform/global plan -no-color 2>&1 | tee plan-global.txt
 
       - name: Terraform init (platform)
-        run: terraform init -chdir=terraform/platform
+        run: terraform -chdir=terraform/platform init
 
       - name: Terraform validate (platform)
-        run: terraform validate -chdir=terraform/platform
+        run: terraform -chdir=terraform/platform validate
 
       - name: Terraform plan (platform)
         id: plan-platform
         run: |
           set -o pipefail
-          terraform plan -no-color -chdir=terraform/platform 2>&1 | tee plan-platform.txt
+          terraform -chdir=terraform/platform plan -no-color 2>&1 | tee plan-platform.txt
 
       - name: Comment plan on PR
         if: github.event_name == 'pull_request'

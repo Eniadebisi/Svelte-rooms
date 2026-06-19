@@ -50,16 +50,16 @@ jobs:
         continue-on-error: true
 
       - name: Terraform init (global)
-        run: terraform init -backend=false -chdir=terraform/global
+        run: terraform -chdir=terraform/global init -backend=false
 
       - name: Terraform validate (global)
-        run: terraform validate -chdir=terraform/global
+        run: terraform -chdir=terraform/global validate
 
       - name: Terraform init (platform)
-        run: terraform init -backend=false -chdir=terraform/platform
+        run: terraform -chdir=terraform/platform init -backend=false
 
       - name: Terraform validate (platform)
-        run: terraform validate -chdir=terraform/platform
+        run: terraform -chdir=terraform/platform validate
 
       - name: Helm lint
         run: helm lint helm/svelte-rooms
