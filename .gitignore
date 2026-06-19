@@ -1,5 +1,6 @@
 node_modules
 .vscode/settings.json
+docs/
 
 # Terraform
 *.tfvars
@@ -9,8 +10,8 @@ terraform.tfstate*
 # Output
 .output
 .vercel
-/.svelte-kit
-/build
+.svelte-kit
+build
 
 # OS
 .DS_Store
@@ -28,3 +29,5 @@ vite.config.ts.timestamp-*
 prisma/generated
 .env*.local
 .claude
+.secrets
+.actrc

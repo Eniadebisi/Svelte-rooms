@@ -1,0 +1,92 @@
+name: Infra Up
+
+on:
+  workflow_dispatch:
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  up:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v4.0.1
+        with:
+          terraform_version: "1.10.0"
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v6
+        with:
+          role-to-assume: ${{ secrets.GHA_DEPLOY_ROLE_ARN }}
+          aws-region: ${{ secrets.AWS_REGION }}
+
+      - name: Fetch Terraform vars from SSM
+        run: |
+          get() { aws ssm get-parameter --name "$1" --with-decryption --query Parameter.Value --output text; }
+
+          DB_PW=$(get /cicd-gh-action-test/db-password)
+          JWT=$(get /cicd-gh-action-test/jwt-access-secret)
+          EMAIL=$(get /cicd-gh-action-test/auth-email)
+          EMAIL_PW=$(get /cicd-gh-action-test/auth-email-pw)
+
+          echo "::add-mask::$DB_PW"
+          echo "::add-mask::$JWT"
+          echo "::add-mask::$EMAIL_PW"
+
+          echo "TF_VAR_db_password=$DB_PW"         >> $GITHUB_ENV
+          echo "TF_VAR_jwt_access_secret=$JWT"     >> $GITHUB_ENV
+          echo "TF_VAR_auth_email=$EMAIL"          >> $GITHUB_ENV
+          echo "TF_VAR_auth_email_pw=$EMAIL_PW"    >> $GITHUB_ENV
+
+      - name: Terraform init
+        run: terraform -chdir=terraform/platform init
+
+      - name: Terraform apply
+        run: terraform -chdir=terraform/platform apply -auto-approve
+
+      - name: Update kubeconfig
+        run: |
+          aws eks update-kubeconfig --name svelte-rooms --region ${{ secrets.AWS_REGION }}
+
+      - name: Apply CloudWatch log router ConfigMap
+        run: |
+          kubectl create namespace aws-observability --dry-run=client -o yaml | kubectl apply -f -
+          kubectl apply -f monitoring/aws-logging-configmap.yaml
+
+      - name: Add Helm repos
+        run: |
+          helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
+          helm repo add jaegertracing https://jaegertracing.github.io/helm-charts
+          helm repo update
+
+      - name: Install Prometheus
+        run: |
+          helm upgrade --install prometheus prometheus-community/prometheus \
+            -n observability \
+            --create-namespace \
+            -f monitoring/prometheus-values.yaml
+
+      - name: Install Jaeger
+        run: |
+          helm upgrade --install jaeger jaegertracing/jaeger \
+            -n observability \
+            -f monitoring/jaeger-values.yaml
+
+      - name: Deploy prod with backup CronJob enabled
+        run: |
+          BACKUP_ROLE=$(terraform -chdir=terraform/platform output -raw backup_role_arn)
+          BACKUP_BUCKET=$(terraform -chdir=terraform/global output -raw backups_bucket_name 2>/dev/null || echo "svelte-rooms-backups")
+
+          helm upgrade --install svelte-rooms ./helm/svelte-rooms \
+            -n prod \
+            --create-namespace \
+            -f helm/svelte-rooms/values-prod.yaml \
+            --set backup.roleArn="$BACKUP_ROLE" \
+            --set backup.bucket="$BACKUP_BUCKET" \
+            --atomic --wait --timeout 5m || echo "Prod not yet deployed — backup CronJob will be applied on next deploy"

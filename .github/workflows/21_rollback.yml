@@ -1,0 +1,64 @@
+name: Rollback
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: "Environment to roll back"
+        required: true
+        type: choice
+        options:
+          - dev
+          - qa
+          - prod
+      revision:
+        description: "Helm revision number (leave blank for previous)"
+        required: false
+        type: string
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  rollback:
+    runs-on: ubuntu-latest
+    environment: ${{ inputs.environment }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v6
+        with:
+          role-to-assume: ${{ secrets.GHA_DEPLOY_ROLE_ARN }}
+          aws-region: ${{ secrets.AWS_REGION }}
+
+      - name: Check EKS cluster exists
+        run: |
+          aws eks describe-cluster --name svelte-rooms --region ${{ secrets.AWS_REGION }} \
+            || (echo "Cluster not running. Run infra-up.yml first."; exit 1)
+
+      - name: Update kubeconfig
+        run: |
+          aws eks update-kubeconfig --name svelte-rooms --region ${{ secrets.AWS_REGION }}
+
+      - name: Show Helm history
+        run: helm history svelte-rooms -n ${{ inputs.environment }}
+
+      - name: Rollback
+        run: |
+          if [ -n "${{ inputs.revision }}" ]; then
+            helm rollback svelte-rooms ${{ inputs.revision }} \
+              -n ${{ inputs.environment }} --wait --timeout 5m
+          else
+            helm rollback svelte-rooms \
+              -n ${{ inputs.environment }} --wait --timeout 5m
+          fi
+
+      - name: Verify health after rollback
+        run: |
+          kubectl rollout status deployment/svelte-rooms \
+            -n ${{ inputs.environment }} --timeout=3m
+          echo "Note: helm rollback restores manifests only — Prisma migrations are forward-only."

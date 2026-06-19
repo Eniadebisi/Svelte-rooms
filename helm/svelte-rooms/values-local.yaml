@@ -1,0 +1,19 @@
+replicaCount: 1
+
+image:
+  repository: "svelte-rooms"
+  tag: "local"
+  pullPolicy: Never
+
+env:
+  NODE_ENV: "development"
+  PORT: "3000"
+  OTEL_EXPORTER_OTLP_ENDPOINT: "http://jaeger:16686"
+
+resources:
+  requests:
+    cpu: "100m"
+    memory: "128Mi"
+  limits:
+    cpu: "250m"
+    memory: "256Mi"

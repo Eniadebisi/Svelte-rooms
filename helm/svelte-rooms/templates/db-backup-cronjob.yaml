@@ -1,0 +1,65 @@
+{{- if .Values.backup.enabled }}
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: {{ include "svelte-rooms.fullname" . }}-backup
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "svelte-rooms.labels" . | nindent 4 }}
+  annotations:
+    eks.amazonaws.com/role-arn: {{ .Values.backup.roleArn | quote }}
+---
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: {{ include "svelte-rooms.fullname" . }}-db-backup
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "svelte-rooms.labels" . | nindent 4 }}
+spec:
+  schedule: {{ .Values.backup.schedule | quote }}
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 1
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          serviceAccountName: {{ include "svelte-rooms.fullname" . }}-backup
+          restartPolicy: OnFailure
+          volumes:
+            - name: dump
+              emptyDir: {}
+          initContainers:
+            - name: mysqldump
+              image: mysql:8.0
+              command: [sh, -c]
+              args:
+                - |
+                  mysqldump \
+                    --host=$DB_HOST \
+                    --user=admin \
+                    --password=$DB_PASSWORD \
+                    --single-transaction \
+                    --routines \
+                    svelte_rooms | gzip > /dump/backup.sql.gz
+                  echo "Dump complete: $(du -sh /dump/backup.sql.gz)"
+              envFrom:
+                - secretRef:
+                    name: {{ .Values.secretName }}
+              volumeMounts:
+                - name: dump
+                  mountPath: /dump
+          containers:
+            - name: upload
+              image: amazon/aws-cli:latest
+              command: [sh, -c]
+              args:
+                - |
+                  FILENAME="{{ .Release.Namespace }}/$(date +%Y-%m-%d-%H%M%S).sql.gz"
+                  aws s3 cp /dump/backup.sql.gz s3://{{ .Values.backup.bucket }}/$FILENAME
+                  echo "Uploaded to s3://{{ .Values.backup.bucket }}/$FILENAME"
+              volumeMounts:
+                - name: dump
+                  mountPath: /dump
+{{- end }}

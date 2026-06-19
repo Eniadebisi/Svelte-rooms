@@ -11,8 +11,8 @@ const config = {
     alias: {
       $lib: "./src/lib",
       "$lib/*": "./src/lib/*",
-      $src: "./src",
-      "$src/*": "./src/*",
+      $app: "./app",
+      "$app/*": "./src/*",
       $static: "./static/",
       $db: "./src/lib/server/db.js",
       // "$logs": ["./logs"],

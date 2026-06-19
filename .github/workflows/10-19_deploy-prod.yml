@@ -9,6 +9,9 @@ jobs:
   retag:
     name: Retag QA image for Prod
     runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
     outputs:
       image-tag: ${{ steps.tag.outputs.image-tag }}
       version: ${{ steps.tag.outputs.version }}
@@ -22,16 +25,17 @@ jobs:
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v6
         with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          role-to-assume: ${{ secrets.GHA_DEPLOY_ROLE_ARN }}
           aws-region: ${{ secrets.AWS_REGION }}
-          mask-aws-account-id: true
 
       - name: Login to ECR
+        id: login-ecr
         uses: aws-actions/amazon-ecr-login@v2
 
       - name: Retag QA image as Prod
         id: tag
+        env:
+          REGISTRY: ${{ steps.login-ecr.outputs.registry }}
         run: |
           git fetch --tags
           VERSION=$(git tag -l 'v*' | sort -V | tail -1)
@@ -46,11 +50,11 @@ jobs:
 
           PROD_TAG="prod-${VERSION}"
 
-          docker pull $REPO:$QA_TAG
+          docker pull $REGISTRY/$REPO:$QA_TAG
 
-          docker tag $REPO:$QA_TAG $REPO:$PROD_TAG
+          docker tag $REGISTRY/$REPO:$QA_TAG $REGISTRY/$REPO:$PROD_TAG
 
-          docker push $REPO:$PROD_TAG
+          docker push $REGISTRY/$REPO:$PROD_TAG
 
           echo "image-tag=${PROD_TAG}" >> $GITHUB_OUTPUT
           echo "version=${VERSION}" >> $GITHUB_OUTPUT
@@ -58,7 +62,7 @@ jobs:
   deploy:
     name: Deploy AWS Prod
     needs: [retag]
-    uses: ./.github/workflows/_deploy.yml
+    uses: ./.github/workflows/_deploy-eks.yml
     with:
       environment: prod
       image-tag: ${{ needs.retag.outputs.image-tag }}
