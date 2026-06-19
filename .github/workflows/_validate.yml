@@ -46,8 +46,7 @@ jobs:
           terraform_version: "1.10.0"
 
       - name: Terraform fmt check
-        run: terraform fmt -recursive -check -write=false
-        working-directory: terraform
+        run: terraform fmt -recursive -check -write=false terraform/
         continue-on-error: true
 
       - name: Terraform init (global)
@@ -84,7 +83,7 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v6
 
-      - name: Trivy filesystem scan (SARIF)
+      - name: Trivy filesystem scan
         uses: aquasecurity/trivy-action@v0.36.0
         with:
           scan-type: fs

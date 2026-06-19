@@ -80,8 +80,8 @@ jobs:
 
       - name: Deploy prod with backup CronJob enabled
         run: |
-          BACKUP_ROLE=$(terraform output -raw backup_role_arn -chdir=terraform/platform)
-          BACKUP_BUCKET=$(terraform output -raw -chdir=terraform/global backups_bucket_name 2>/dev/null || echo "svelte-rooms-backups")
+          BACKUP_ROLE=$(terraform -chdir=terraform/platform output -raw backup_role_arn)
+          BACKUP_BUCKET=$(terraform -chdir=terraform/global output -raw backups_bucket_name 2>/dev/null || echo "svelte-rooms-backups")
 
           helm upgrade --install svelte-rooms ./helm/svelte-rooms \
             -n prod \
