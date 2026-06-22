@@ -156,6 +156,7 @@ resource "aws_iam_role_policy" "gha_deploy" {
           "iam:PutRolePolicy",
           "iam:DeleteRolePolicy",
           "iam:GetRolePolicy",
+          "iam:GetPolicy",
           "iam:ListRolePolicies",
           "iam:ListAttachedRolePolicies",
           "iam:CreateInstanceProfile",

@@ -85,7 +85,7 @@ push dev
 
 ### Branching Strategy
 
-```
+```text
 feature/* ──► dev ──► qa ──► main
                 │      │       │
              (auto)  (auto)  (manual
