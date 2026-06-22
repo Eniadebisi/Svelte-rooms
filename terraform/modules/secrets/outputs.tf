@@ -1,4 +1,4 @@
-output "db_password_arn" {
+output "rds_password_arn" {
   value = aws_ssm_parameter.db_password.arn
 }
 

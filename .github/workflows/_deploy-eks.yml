@@ -6,7 +6,7 @@ on:
       environment:
         required: true
         type: string
-        description: "Target environment: dev | qa | prod"
+        description: "Target environment: qa | prod"
       image-tag:
         required: true
         type: string

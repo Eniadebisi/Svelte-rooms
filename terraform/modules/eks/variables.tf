@@ -25,3 +25,9 @@ variable "vpc_id" {
 variable "gha_deploy_role_arn" {
   type = string
 }
+
+variable "dev_user_arns" {
+  type        = list(string)
+  default     = []
+  description = "IAM user ARNs granted edit access to the observability namespace (enables kubectl port-forward)"
+}

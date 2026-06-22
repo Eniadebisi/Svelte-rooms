@@ -29,7 +29,7 @@ groups:
           description: "95th percentile latency over 1s for 10 minutes"
 
       - alert: PodRestartLoop
-        expr: increase(kube_pod_container_status_restarts_total{namespace=~"dev|qa|prod"}[1h]) > 3
+        expr: increase(kube_pod_container_status_restarts_total{namespace=~"qa|prod"}[1h]) > 3
         for: 5m
         labels:
           severity: warning

@@ -107,7 +107,6 @@ resource "aws_eks_fargate_profile" "apps" {
   pod_execution_role_arn = aws_iam_role.fargate_execution.arn
   subnet_ids             = var.private_subnet_ids
 
-  selector { namespace = "dev" }
   selector { namespace = "qa" }
   selector { namespace = "prod" }
   selector { namespace = "observability" }
@@ -206,4 +205,27 @@ resource "aws_eks_access_policy_association" "gha_deploy" {
   }
 
   depends_on = [aws_eks_access_entry.gha_deploy]
+}
+
+# --- Dev user access — edit on observability namespace (allows kubectl port-forward) ---
+
+resource "aws_eks_access_entry" "dev_users" {
+  for_each      = toset(var.dev_user_arns)
+  cluster_name  = aws_eks_cluster.main.name
+  principal_arn = each.value
+  type          = "STANDARD"
+}
+
+resource "aws_eks_access_policy_association" "dev_users_observability" {
+  for_each      = toset(var.dev_user_arns)
+  cluster_name  = aws_eks_cluster.main.name
+  principal_arn = each.value
+  policy_arn    = "arn:aws:eks::aws:cluster-access-policy/AmazonEKSEditPolicy"
+
+  access_scope {
+    type       = "namespace"
+    namespaces = ["observability"]
+  }
+
+  depends_on = [aws_eks_access_entry.dev_users]
 }

@@ -20,7 +20,6 @@ aws ssm put-parameter \
 
 Re-run the deploy workflow for the target environment. The workflow re-reads SSM on every run.
 
-- **dev:** Actions > Deploy to EKS (dev) > Run workflow
 - **qa:** Actions > deploy-qa.yml > Run workflow
 - **prod:** Actions > deploy-prod.yml > Run workflow (requires prod environment approval)
 

@@ -10,7 +10,7 @@ variable "account_id" {
   type = string
 }
 
-variable "db_password" {
+variable "rds_password" {
   type      = string
   sensitive = true
 }

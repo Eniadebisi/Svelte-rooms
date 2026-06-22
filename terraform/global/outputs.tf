@@ -44,8 +44,8 @@ output "ecs_task_execution_role_arn" {
   value = data.aws_iam_role.ecs_task_execution.arn
 }
 
-output "db_password_arn" {
-  value = module.secrets.db_password_arn
+output "rds_password_arn" {
+  value = module.secrets.rds_password_arn
 }
 
 output "jwt_secret_arn" {

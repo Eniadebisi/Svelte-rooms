@@ -16,7 +16,7 @@ variable "app_name" {
 
 variable "environments" {
   type    = list(string)
-  default = ["dev", "qa", "prod"]
+  default = ["qa", "prod"]
 }
 
 variable "container_port" {
@@ -40,7 +40,7 @@ variable "private_subnet_cidrs" {
   description = "Private subnets for EKS Fargate (pods must not be in public subnets)"
 }
 
-variable "db_password" {
+variable "rds_password" {
   type      = string
   sensitive = true
 }

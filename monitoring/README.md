@@ -7,12 +7,15 @@
 | Prometheus | observability | prometheus-server-* | Fargate pod, 24h ephemeral TSDB, no AlertManager |
 | Jaeger all-in-one | observability | jaeger-* | Fargate pod, in-memory traces (lost on restart) |
 | kube-state-metrics | observability | kube-state-metrics-* | Cluster metrics for Prometheus |
-| App metrics | dev / qa / prod | svelte-rooms-* | prom-client at /metrics |
+| App metrics | qa / prod | svelte-rooms-* | prom-client at /metrics |
 | Logs | AWS CloudWatch | n/a | Fargate native log router — no Fluentd/Fluent Bit pods needed |
 
 ## Accessing Prometheus
 
+**Requires:** your IAM user must be in `dev_user_arns` in `terraform/platform/variables.tf` and Terraform applied.
+
 ```bash
+aws eks update-kubeconfig --name svelte-rooms --region us-east-1
 kubectl port-forward svc/prometheus-server -n observability 9090:80
 ```
 
@@ -32,12 +35,15 @@ Browse to http://localhost:16686
 
 Select service **svelte-rooms** in the dropdown and click Find Traces.
 
+## Adding another dev user
+
+Add their IAM user ARN to `dev_user_arns` in [terraform/platform/variables.tf](../terraform/platform/variables.tf) and run `terraform apply` (or trigger the infra-up workflow).
+
 ## CloudWatch Logs
 
 Fargate pods stream logs automatically via the built-in Fluent Bit log router.
 
 **Log groups:**
-- `/eks/svelte-rooms/dev`
 - `/eks/svelte-rooms/qa`
 - `/eks/svelte-rooms/prod`
 
