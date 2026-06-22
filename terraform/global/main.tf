@@ -68,7 +68,7 @@ module "secrets" {
   project_name          = var.project_name
   aws_region            = var.aws_region
   account_id            = data.aws_caller_identity.current.account_id
-  db_password           = var.db_password
+  rds_password          = var.rds_password
   jwt_access_secret     = var.jwt_access_secret
   auth_email            = var.auth_email
   auth_email_pw         = var.auth_email_pw

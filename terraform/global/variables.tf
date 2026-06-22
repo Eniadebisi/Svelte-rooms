@@ -40,7 +40,7 @@ variable "private_subnet_cidrs" {
   description = "Private subnets for EKS Fargate (pods must not be in public subnets)"
 }
 
-variable "db_password" {
+variable "rds_password" {
   type      = string
   sensitive = true
 }

@@ -196,7 +196,7 @@ resource "aws_iam_role_policy" "backup_s3" {
 # ============================================================
 
 resource "aws_ssm_parameter" "db_host" {
-  for_each = var.db_password
+  for_each = toset(var.environments)
 
   name  = "/svelte-rooms/${each.key}/db-host"
   type  = "String"
@@ -206,11 +206,11 @@ resource "aws_ssm_parameter" "db_host" {
 }
 
 resource "aws_ssm_parameter" "db_password_env" {
-  for_each = var.db_password
+  for_each = toset(var.environments)
 
   name        = "/svelte-rooms/${each.key}/db-password"
   type        = "SecureString"
-  value       = each.value
+  value       = var.rds_password
   description = "RDS password for ${each.key}"
 
   tags = { Project = var.project_name, Environment = each.key }

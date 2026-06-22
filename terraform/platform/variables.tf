@@ -18,24 +18,21 @@ variable "vpc_cidr" {
   default = "10.0.0.0/16"
 }
 
-variable "db_password" {
-  type      = map(string)
-  sensitive = true
+variable "environments" {
+  type    = list(string)
+  default = ["qa", "prod"]
 }
 
 variable "jwt_access_secret" {
-  type      = map(string)
-  sensitive = true
+  type = map(string)
 }
 
 variable "auth_email" {
-  type      = map(string)
-  sensitive = true
+  type = map(string)
 }
 
 variable "auth_email_pw" {
-  type      = map(string)
-  sensitive = true
+  type = map(string)
 }
 
 variable "rds_password" {

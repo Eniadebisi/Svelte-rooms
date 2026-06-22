@@ -44,7 +44,7 @@ jobs:
           echo "::add-mask::$JWT"
           echo "::add-mask::$EMAIL_PW"
 
-          echo "TF_VAR_db_password=$DB_PW"         >> $GITHUB_ENV
+          echo "TF_VAR_rds_password=$DB_PW"         >> $GITHUB_ENV
           echo "TF_VAR_jwt_access_secret=$JWT"     >> $GITHUB_ENV
           echo "TF_VAR_auth_email=$EMAIL"          >> $GITHUB_ENV
           echo "TF_VAR_auth_email_pw=$EMAIL_PW"    >> $GITHUB_ENV

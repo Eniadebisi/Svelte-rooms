@@ -10,22 +10,21 @@ permissions:
 
 jobs:
   # ── Read per-environment secrets ──────────────────────────────
-  # Each job is scoped to a GitHub Environment so secrets.DB_PASSWORD
+  # Each job is scoped to a GitHub Environment so secrets.JWT_ACCESS_SECRET
   # etc. resolve to that environment's values. Jobs run in parallel.
   # dev has no Terraform infrastructure — qa and prod only.
+  # RDS_PASSWORD is repo-level (shared DB instance, not per-env).
 
   read-qa:
     runs-on: ubuntu-latest
     environment: qa
     outputs:
-      db_password:       ${{ steps.out.outputs.db_password }}
       jwt_access_secret: ${{ steps.out.outputs.jwt_access_secret }}
       auth_email:        ${{ steps.out.outputs.auth_email }}
       auth_email_pw:     ${{ steps.out.outputs.auth_email_pw }}
     steps:
       - id: out
         run: |
-          echo "db_password=${{ secrets.DB_PASSWORD }}"             >> $GITHUB_OUTPUT
           echo "jwt_access_secret=${{ secrets.JWT_ACCESS_SECRET }}" >> $GITHUB_OUTPUT
           echo "auth_email=${{ secrets.AUTH_EMAIL }}"               >> $GITHUB_OUTPUT
           echo "auth_email_pw=${{ secrets.AUTH_EMAIL_PW }}"         >> $GITHUB_OUTPUT
@@ -34,14 +33,12 @@ jobs:
     runs-on: ubuntu-latest
     environment: prod
     outputs:
-      db_password:       ${{ steps.out.outputs.db_password }}
       jwt_access_secret: ${{ steps.out.outputs.jwt_access_secret }}
       auth_email:        ${{ steps.out.outputs.auth_email }}
       auth_email_pw:     ${{ steps.out.outputs.auth_email_pw }}
     steps:
       - id: out
         run: |
-          echo "db_password=${{ secrets.DB_PASSWORD }}"             >> $GITHUB_OUTPUT
           echo "jwt_access_secret=${{ secrets.JWT_ACCESS_SECRET }}" >> $GITHUB_OUTPUT
           echo "auth_email=${{ secrets.AUTH_EMAIL }}"               >> $GITHUB_OUTPUT
           echo "auth_email_pw=${{ secrets.AUTH_EMAIL_PW }}"         >> $GITHUB_OUTPUT
@@ -69,8 +66,6 @@ jobs:
 
       - name: Build Terraform map vars
         run: |
-          QA_DB="${{ needs.read-qa.outputs.db_password }}"
-          PROD_DB="${{ needs.read-prod.outputs.db_password }}"
           QA_JWT="${{ needs.read-qa.outputs.jwt_access_secret }}"
           PROD_JWT="${{ needs.read-prod.outputs.jwt_access_secret }}"
           QA_EMAIL="${{ needs.read-qa.outputs.auth_email }}"
@@ -78,14 +73,11 @@ jobs:
           QA_EMAIL_PW="${{ needs.read-qa.outputs.auth_email_pw }}"
           PROD_EMAIL_PW="${{ needs.read-prod.outputs.auth_email_pw }}"
 
-          echo "::add-mask::$QA_DB"
-          echo "::add-mask::$PROD_DB"
           echo "::add-mask::$QA_JWT"
           echo "::add-mask::$PROD_JWT"
           echo "::add-mask::$QA_EMAIL_PW"
           echo "::add-mask::$PROD_EMAIL_PW"
 
-          echo "TF_VAR_db_password={\"qa\":\"$QA_DB\",\"prod\":\"$PROD_DB\"}"                     >> $GITHUB_ENV
           echo "TF_VAR_jwt_access_secret={\"qa\":\"$QA_JWT\",\"prod\":\"$PROD_JWT\"}"             >> $GITHUB_ENV
           echo "TF_VAR_auth_email={\"qa\":\"$QA_EMAIL\",\"prod\":\"$PROD_EMAIL\"}"                >> $GITHUB_ENV
           echo "TF_VAR_auth_email_pw={\"qa\":\"$QA_EMAIL_PW\",\"prod\":\"$PROD_EMAIL_PW\"}"       >> $GITHUB_ENV
