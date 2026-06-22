@@ -61,6 +61,7 @@ module "eks" {
   vpc_id              = local.g.vpc_id
   private_subnet_ids  = local.g.private_subnet_ids
   gha_deploy_role_arn = local.g.gha_deploy_role_arn
+  dev_user_arns       = var.dev_user_arns
 }
 
 # Tag private subnets for EKS (can't do this in global since cluster name is ephemeral)
@@ -72,7 +73,7 @@ resource "aws_ec2_tag" "private_subnet_eks" {
 }
 
 # ============================================================
-# fck-nat — cheap NAT for private subnet egress (~$3/mo vs $33 for NAT GW)
+# fck-nat — cheap NAT for private subnet egress
 # ============================================================
 
 module "fck_nat" {
@@ -130,7 +131,7 @@ resource "aws_db_instance" "main" {
 
   db_name  = "svelte_rooms"
   username = "admin"
-  password = var.db_password
+  password = var.rds_password
 
   db_subnet_group_name   = aws_db_subnet_group.main.name
   vpc_security_group_ids = [aws_security_group.rds.id]
@@ -195,7 +196,7 @@ resource "aws_iam_role_policy" "backup_s3" {
 # ============================================================
 
 resource "aws_ssm_parameter" "db_host" {
-  for_each = toset(var.environments)
+  for_each = var.db_password
 
   name  = "/svelte-rooms/${each.key}/db-host"
   type  = "String"
@@ -205,44 +206,44 @@ resource "aws_ssm_parameter" "db_host" {
 }
 
 resource "aws_ssm_parameter" "db_password_env" {
-  for_each = toset(var.environments)
+  for_each = var.db_password
 
   name        = "/svelte-rooms/${each.key}/db-password"
   type        = "SecureString"
-  value       = var.db_password
+  value       = each.value
   description = "RDS password for ${each.key}"
 
   tags = { Project = var.project_name, Environment = each.key }
 }
 
 resource "aws_ssm_parameter" "jwt_secret_env" {
-  for_each = toset(var.environments)
+  for_each = var.jwt_access_secret
 
   name        = "/svelte-rooms/${each.key}/jwt-access-secret"
   type        = "SecureString"
-  value       = var.jwt_access_secret
+  value       = each.value
   description = "JWT secret for ${each.key}"
 
   tags = { Project = var.project_name, Environment = each.key }
 }
 
 resource "aws_ssm_parameter" "auth_email_env" {
-  for_each = toset(var.environments)
+  for_each = var.auth_email
 
   name        = "/svelte-rooms/${each.key}/auth-email"
   type        = "SecureString"
-  value       = var.auth_email
+  value       = each.value
   description = "Auth email for ${each.key}"
 
   tags = { Project = var.project_name, Environment = each.key }
 }
 
 resource "aws_ssm_parameter" "auth_email_pw_env" {
-  for_each = toset(var.environments)
+  for_each = var.auth_email_pw
 
   name        = "/svelte-rooms/${each.key}/auth-email-pw"
   type        = "SecureString"
-  value       = var.auth_email_pw
+  value       = each.value
   description = "Auth email password for ${each.key}"
 
   tags = { Project = var.project_name, Environment = each.key }

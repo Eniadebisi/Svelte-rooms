@@ -4,7 +4,7 @@
 
 1. Go to Actions > **rollback.yml**
 2. Click **Run workflow**
-3. Select the target environment (`dev`, `qa`, or `prod`) and the Helm revision to roll back to
+3. Select the target environment (`qa` or `prod`) and the Helm revision to roll back to
 4. Click **Run workflow**
 
 The workflow runs `helm rollback` with `--wait` and reports success or failure in the Actions log.

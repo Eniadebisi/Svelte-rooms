@@ -6,7 +6,7 @@ on:
       environment:
         required: true
         type: string
-        description: "Build on dev | qa | prod"
+        description: "Build on qa | prod"
     outputs:
       image-tag:
         description: "ECR image tag built and pushed"

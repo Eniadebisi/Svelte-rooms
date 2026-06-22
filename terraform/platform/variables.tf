@@ -13,32 +13,39 @@ variable "cluster_name" {
   default = "svelte-rooms"
 }
 
-variable "environments" {
-  type    = list(string)
-  default = ["dev", "qa", "prod"]
-}
-
 variable "vpc_cidr" {
   type    = string
   default = "10.0.0.0/16"
 }
 
 variable "db_password" {
-  type      = string
+  type      = map(string)
   sensitive = true
 }
 
 variable "jwt_access_secret" {
-  type      = string
+  type      = map(string)
   sensitive = true
 }
 
 variable "auth_email" {
-  type      = string
+  type      = map(string)
   sensitive = true
 }
 
 variable "auth_email_pw" {
+  type      = map(string)
+  sensitive = true
+}
+
+variable "rds_password" {
   type      = string
   sensitive = true
+  description = "RDS master password — shared across all environments (single DB instance)"
+}
+
+variable "dev_user_arns" {
+  type        = list(string)
+  default     = []
+  description = "IAM user ARNs granted kubectl access to the observability namespace"
 }

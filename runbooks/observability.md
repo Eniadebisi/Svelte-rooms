@@ -35,7 +35,7 @@ histogram_quantile(0.95, rate(http_request_duration_seconds_bucket[10m]))
 
 Pod restart count (last 1h):
 ```promql
-increase(kube_pod_container_status_restarts_total{namespace=~"dev|qa|prod"}[1h])
+increase(kube_pod_container_status_restarts_total{namespace=~"qa|prod"}[1h])
 ```
 
 ### Alert response
@@ -78,7 +78,7 @@ Browse to http://localhost:16686
 
 1. Open AWS Console > CloudWatch > Log groups
 2. Search for `/eks/svelte-rooms`
-3. Select the environment log group (`/eks/svelte-rooms/dev`, `/eks/svelte-rooms/qa`, `/eks/svelte-rooms/prod`)
+3. Select the environment log group (`/eks/svelte-rooms/qa`, `/eks/svelte-rooms/prod`)
 4. Click a log stream (named after the Fargate task)
 5. Use **Logs Insights** for structured queries
 

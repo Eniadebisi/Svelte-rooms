@@ -16,7 +16,7 @@ variable "app_name" {
 
 variable "environments" {
   type    = list(string)
-  default = ["dev", "qa", "prod"]
+  default = ["qa", "prod"]
 }
 
 variable "container_port" {

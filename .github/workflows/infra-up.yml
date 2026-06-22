@@ -9,8 +9,48 @@ permissions:
   contents: read
 
 jobs:
+  # ── Read per-environment secrets ──────────────────────────────
+  # Each job is scoped to a GitHub Environment so secrets.DB_PASSWORD
+  # etc. resolve to that environment's values. Jobs run in parallel.
+  # dev has no Terraform infrastructure — qa and prod only.
+
+  read-qa:
+    runs-on: ubuntu-latest
+    environment: qa
+    outputs:
+      db_password:       ${{ steps.out.outputs.db_password }}
+      jwt_access_secret: ${{ steps.out.outputs.jwt_access_secret }}
+      auth_email:        ${{ steps.out.outputs.auth_email }}
+      auth_email_pw:     ${{ steps.out.outputs.auth_email_pw }}
+    steps:
+      - id: out
+        run: |
+          echo "db_password=${{ secrets.DB_PASSWORD }}"             >> $GITHUB_OUTPUT
+          echo "jwt_access_secret=${{ secrets.JWT_ACCESS_SECRET }}" >> $GITHUB_OUTPUT
+          echo "auth_email=${{ secrets.AUTH_EMAIL }}"               >> $GITHUB_OUTPUT
+          echo "auth_email_pw=${{ secrets.AUTH_EMAIL_PW }}"         >> $GITHUB_OUTPUT
+
+  read-prod:
+    runs-on: ubuntu-latest
+    environment: prod
+    outputs:
+      db_password:       ${{ steps.out.outputs.db_password }}
+      jwt_access_secret: ${{ steps.out.outputs.jwt_access_secret }}
+      auth_email:        ${{ steps.out.outputs.auth_email }}
+      auth_email_pw:     ${{ steps.out.outputs.auth_email_pw }}
+    steps:
+      - id: out
+        run: |
+          echo "db_password=${{ secrets.DB_PASSWORD }}"             >> $GITHUB_OUTPUT
+          echo "jwt_access_secret=${{ secrets.JWT_ACCESS_SECRET }}" >> $GITHUB_OUTPUT
+          echo "auth_email=${{ secrets.AUTH_EMAIL }}"               >> $GITHUB_OUTPUT
+          echo "auth_email_pw=${{ secrets.AUTH_EMAIL_PW }}"         >> $GITHUB_OUTPUT
+
+  # ── Terraform + Helm ──────────────────────────────────────────
+
   up:
     runs-on: ubuntu-latest
+    needs: [read-qa, read-prod]
 
     steps:
       - name: Checkout code
@@ -27,23 +67,30 @@ jobs:
           role-to-assume: ${{ secrets.GHA_DEPLOY_ROLE_ARN }}
           aws-region: ${{ secrets.AWS_REGION }}
 
-      - name: Fetch Terraform vars from SSM
+      - name: Build Terraform map vars
         run: |
-          get() { aws ssm get-parameter --name "$1" --with-decryption --query Parameter.Value --output text; }
+          QA_DB="${{ needs.read-qa.outputs.db_password }}"
+          PROD_DB="${{ needs.read-prod.outputs.db_password }}"
+          QA_JWT="${{ needs.read-qa.outputs.jwt_access_secret }}"
+          PROD_JWT="${{ needs.read-prod.outputs.jwt_access_secret }}"
+          QA_EMAIL="${{ needs.read-qa.outputs.auth_email }}"
+          PROD_EMAIL="${{ needs.read-prod.outputs.auth_email }}"
+          QA_EMAIL_PW="${{ needs.read-qa.outputs.auth_email_pw }}"
+          PROD_EMAIL_PW="${{ needs.read-prod.outputs.auth_email_pw }}"
 
-          DB_PW=$(get /cicd-gh-action-test/db-password)
-          JWT=$(get /cicd-gh-action-test/jwt-access-secret)
-          EMAIL=$(get /cicd-gh-action-test/auth-email)
-          EMAIL_PW=$(get /cicd-gh-action-test/auth-email-pw)
+          echo "::add-mask::$QA_DB"
+          echo "::add-mask::$PROD_DB"
+          echo "::add-mask::$QA_JWT"
+          echo "::add-mask::$PROD_JWT"
+          echo "::add-mask::$QA_EMAIL_PW"
+          echo "::add-mask::$PROD_EMAIL_PW"
 
-          echo "::add-mask::$DB_PW"
-          echo "::add-mask::$JWT"
-          echo "::add-mask::$EMAIL_PW"
-
-          echo "TF_VAR_db_password=$DB_PW"         >> $GITHUB_ENV
-          echo "TF_VAR_jwt_access_secret=$JWT"     >> $GITHUB_ENV
-          echo "TF_VAR_auth_email=$EMAIL"          >> $GITHUB_ENV
-          echo "TF_VAR_auth_email_pw=$EMAIL_PW"    >> $GITHUB_ENV
+          echo "TF_VAR_db_password={\"qa\":\"$QA_DB\",\"prod\":\"$PROD_DB\"}"                     >> $GITHUB_ENV
+          echo "TF_VAR_jwt_access_secret={\"qa\":\"$QA_JWT\",\"prod\":\"$PROD_JWT\"}"             >> $GITHUB_ENV
+          echo "TF_VAR_auth_email={\"qa\":\"$QA_EMAIL\",\"prod\":\"$PROD_EMAIL\"}"                >> $GITHUB_ENV
+          echo "TF_VAR_auth_email_pw={\"qa\":\"$QA_EMAIL_PW\",\"prod\":\"$PROD_EMAIL_PW\"}"       >> $GITHUB_ENV
+          echo "TF_VAR_dev_user_arns=${{ secrets.DEV_USER_ARNS }}"                               >> $GITHUB_ENV
+          echo "TF_VAR_rds_password=${{ secrets.RDS_PASSWORD }}"                                 >> $GITHUB_ENV
 
       - name: Terraform init
         run: terraform -chdir=terraform/platform init

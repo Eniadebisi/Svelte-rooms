@@ -8,14 +8,6 @@
 
 ## Deploying via GitHub Actions (preferred)
 
-### Deploy to dev
-
-Triggered automatically on every push to the `dev` branch via `_deploy-eks.yml`.
-
-To trigger manually:
-1. Go to Actions > Deploy to EKS (dev)
-2. Click **Run workflow** > select branch `dev` > **Run workflow**
-
 ### Deploy to QA
 
 1. Go to Actions > **deploy-qa.yml**
