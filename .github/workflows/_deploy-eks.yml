@@ -44,6 +44,10 @@ jobs:
         run: |
           aws eks update-kubeconfig --name svelte-rooms --region ${{ secrets.AWS_REGION }}
 
+      - name: Create namespace if it doesn't exist
+        run: |
+          kubectl create namespace ${{ inputs.environment }} --dry-run=client -o yaml | kubectl apply -f -
+
       - name: Sync secrets from SSM to Kubernetes
         run: |
           ENV="${{ inputs.environment }}"
