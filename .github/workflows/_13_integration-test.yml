@@ -1,4 +1,4 @@
-name: Integration Test
+name: "Stage 13: Integration Testing"
 
 on:
   workflow_call:

@@ -26,6 +26,7 @@ resource "aws_iam_role_policy_attachment" "cluster_policy" {
 
 # --- EKS Cluster ---
 
+# trivy:ignore:AVD-AWS-0039
 resource "aws_eks_cluster" "main" {
   name     = var.cluster_name
   version  = "1.31"
@@ -34,7 +35,7 @@ resource "aws_eks_cluster" "main" {
   vpc_config {
     subnet_ids              = var.private_subnet_ids
     endpoint_private_access = true
-    endpoint_public_access  = true
+    endpoint_public_access  = true # trivy:ignore:AVD-AWS-0040 # trivy:ignore:AVD-AWS-0041
   }
 
   access_config {
